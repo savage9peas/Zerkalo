@@ -1,0 +1,6 @@
+<svg width="1080" height="1920" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#F4F1EB"/>
+  <text x="50%" y="48%" font-family="Cormorant Garamond, serif" font-size="64" fill="#C5A880" text-anchor="middle" dominant-baseline="middle">Мобильное фото</text>
+  <text x="50%" y="52%" font-family="Inter, sans-serif" font-size="32" fill="#1A1A18" text-anchor="middle" dominant-baseline="middle">Загрузите ваше фото в папку:</text>
+  <text x="50%" y="54%" font-family="Inter, sans-serif" font-size="32" fill="#1A1A18" text-anchor="middle" dominant-baseline="middle">public/hero/mobile/</text>
+</svg>
