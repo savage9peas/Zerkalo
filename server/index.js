@@ -1,13 +1,19 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import { all, get, initDb, run } from "./db.js";
 import { validateOrderBody } from "./orderValidation.js";
 import { isValidOrderStatus, ORDER_STATUSES } from "./orderStatuses.js";
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, "../dist");
 
 app.use(
   cors({
@@ -15,11 +21,14 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(bodyParser.json());
+app.use(express.static(distPath));
 
 app.post("/api/order", (req, res) => {
   try {
     const validation = validateOrderBody(req.body);
+
     if (!validation.ok) {
       return res.status(400).json({
         error: validation.error,
@@ -203,12 +212,18 @@ app.get("/api/debug/routes", (_req, res) => {
   });
 });
 
+// SPA fallback: всё, что не /api, отдаём как index.html
+app.get(/^(?!\/api).*/, (_req, res) => {
+  return res.sendFile(path.join(distPath, "index.html"));
+});
+
 try {
   initDb();
 
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log("payment route mounted");
+    console.log(`Serving frontend from: ${distPath}`);
   });
 } catch (error) {
   console.error("Failed to initialize database:", error);
