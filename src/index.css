@@ -10,9 +10,14 @@
   --color-blue-gray: #D9E0E8;
   --color-ink: #1A1A18;
   --color-ink-light: #4A4A48;
-  
+
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Inter", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -21,18 +26,19 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6, .font-serif {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-serif {
   font-family: var(--font-serif);
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom selection */
 ::selection {
   background-color: var(--color-gold);
   color: var(--color-ivory);
@@ -44,7 +50,9 @@ html {
   display: inline-flex;
   padding: 1px;
   border-radius: 9999px;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.01) 100%);
 }
 
@@ -58,7 +66,9 @@ html {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 9999px;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 1), inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.05);
   z-index: 1;
   width: 100%;
   border: none;
@@ -92,7 +102,9 @@ html {
 .bg-ink .glass-button {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
   background-color: rgba(0, 0, 0, 0.4);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -1px 1px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.5);
 }
 
 .text-ivory .glass-button-text,
@@ -112,4 +124,136 @@ html {
 
 .glass-button-wrap:active {
   transform: translateY(0);
+}
+
+/* ---------- Mobile fixes ---------- */
+@media (max-width: 768px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 42px !important;
+    line-height: 1.02 !important;
+  }
+
+  h2 {
+    font-size: 24px !important;
+    line-height: 1.1 !important;
+  }
+
+  h3 {
+    font-size: 20px !important;
+    line-height: 1.15 !important;
+  }
+
+  p {
+    line-height: 1.45;
+  }
+
+  .glass-button {
+    min-height: 56px !important;
+    font-size: 18px !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  .glass-button-wrap {
+    max-width: 100% !important;
+  }
+
+  /* общие секции и контейнеры */
+  main,
+  section,
+  article,
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* типичные tailwind-контейнеры */
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl,
+  .max-w-xl,
+  .max-w-lg,
+  .max-w-md,
+  .max-w-sm {
+    max-width: 100% !important;
+  }
+
+  .w-\[90\%\],
+  .w-\[92\%\],
+  .w-\[95\%\],
+  .w-\[96\%\],
+  .w-\[97\%\] {
+    width: 100% !important;
+  }
+
+  .px-24,
+  .px-20,
+  .px-16,
+  .px-14,
+  .px-12,
+  .px-10,
+  .px-8 {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .py-24,
+  .py-20,
+  .py-16 {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+
+  /* карточки */
+  .rounded-3xl,
+  .rounded-\[32px\],
+  .rounded-\[28px\] {
+    border-radius: 22px !important;
+  }
+
+  /* форма */
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px !important;
+  }
+
+  /* блок виджета Яндекс */
+  #delivery-widget {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 520px !important;
+    height: 520px !important;
+    overflow: hidden !important;
+    border-radius: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* возможные контейнеры виджета */
+  .delivery-widget-container,
+  .delivery-widget-wrapper,
+  .delivery-widget-section,
+  .widget-container,
+  .widget-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  iframe {
+    max-width: 100% !important;
+  }
 }
