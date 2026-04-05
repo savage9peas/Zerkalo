@@ -59,7 +59,7 @@ function widgetConfigForViewport() {
     size: mobile
       ? {
           width: "100%",
-          height: "760px",
+          height: "430px",
         }
       : {
           width: "100%",
@@ -85,9 +85,7 @@ function extractPickupId(detail: unknown): string {
     return undefined;
   };
 
-  if (!isRecord(detail)) {
-    return "";
-  }
+  if (!isRecord(detail)) return "";
 
   const direct = tryObj(detail);
   if (direct) return direct;
@@ -225,9 +223,7 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
 
       debounceId = setTimeout(() => {
         debounceId = null;
-
-        const mobileNow = isMobileViewport();
-        setIsMobile(mobileNow);
+        setIsMobile(isMobileViewport());
 
         const mode = currentMode();
         if (lastViewportModeRef.current !== mode) {
@@ -279,16 +275,10 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
         Выберите пункт выдачи
       </h3>
 
-      <div
-        className={
-          isMobile
-            ? "w-full max-w-full rounded-[28px] border border-ink/10 bg-white/50"
-            : "w-full max-w-full overflow-hidden rounded-[28px] border border-ink/10 bg-white/50"
-        }
-      >
+      <div className="w-full max-w-full overflow-hidden rounded-[28px] border border-ink/10 bg-white/50">
         <div
           id={CONTAINER_ID}
-          className={isMobile ? "box-border h-[760px] w-full" : "box-border h-[660px] w-full"}
+          className={isMobile ? "box-border h-[430px] w-full" : "box-border h-[660px] w-full"}
         />
       </div>
 
