@@ -52,21 +52,11 @@ function isMobileViewport(): boolean {
   return typeof window !== "undefined" && window.innerWidth < 768;
 }
 
-function widgetConfigForViewport() {
-  const mobile = isMobileViewport();
-
-  return {
-    size: mobile
-      ? {
-          width: "100%",
-          height: "430px",
-        }
-      : {
-          width: "100%",
-          height: "660px",
-        },
-    showSelectButton: !mobile,
-  };
+function fullscreenWidgetHeightPx(): number {
+  if (typeof window === "undefined") {
+    return 520;
+  }
+  return Math.max(320, window.innerHeight - 88);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -170,51 +160,102 @@ export function mapWidgetDetailToSelectedPickup(
   };
 }
 
-interface DeliveryWidgetProps {
+export type DeliveryWidgetVariant = "default" | "fullscreen";
+
+export interface DeliveryWidgetProps {
   onPickupChange?: (pickup: SelectedPickup) => void;
+  /** default: в модалке checkout; fullscreen: полноэкранный шаг на мобиле */
+  variant?: DeliveryWidgetVariant;
+  showHeading?: boolean;
+  /** Сводку после выбора показывает родитель (модалка), не виджет */
+  showLocalSummary?: boolean;
 }
 
-type ViewportMode = "mobile" | "desktop";
-
-export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) {
+export default function DeliveryWidget({
+  onPickupChange,
+  variant = "default",
+  showHeading = true,
+  showLocalSummary = true,
+}: DeliveryWidgetProps) {
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(isMobileViewport());
-  const lastViewportModeRef = useRef<ViewportMode | null>(null);
+  const [fullscreenH, setFullscreenH] = useState<number>(() =>
+    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 520
+  );
+  const lastConfigSigRef = useRef<string | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
+  const variantRef = useRef(variant);
 
   onPickupChangeRef.current = onPickupChange;
+  variantRef.current = variant;
+
+  useEffect(() => {
+    if (variant !== "fullscreen") {
+      return;
+    }
+    const upd = () => setFullscreenH(fullscreenWidgetHeightPx());
+    upd();
+    window.addEventListener("resize", upd);
+    return () => window.removeEventListener("resize", upd);
+  }, [variant]);
 
   useEffect(() => {
     const DEBOUNCE_MS = 200;
     let debounceId: ReturnType<typeof setTimeout> | null = null;
 
-    const currentMode = (): ViewportMode => (isMobileViewport() ? "mobile" : "desktop");
+    const configSignature = (): string => {
+      const v = variantRef.current;
+      if (v === "fullscreen") {
+        return `fs-${fullscreenH}`;
+      }
+      return isMobileViewport() ? "def-m" : "def-d";
+    };
+
+    const buildParams = (): YaDeliveryCreateWidgetConfig["params"] => {
+      const v = variantRef.current;
+      if (v === "fullscreen") {
+        const h = fullscreenH;
+        return {
+          city: "Москва",
+          delivery_price: " ",
+          delivery_term: "от 1 дня",
+          show_select_button: false,
+          filter: {
+            type: ["pickup_point", "terminal"],
+          },
+          size: { width: "100%", height: `${h}px` },
+        };
+      }
+
+      const mobile = isMobileViewport();
+      return {
+        city: "Москва",
+        delivery_price: " ",
+        delivery_term: "от 1 дня",
+        show_select_button: !mobile,
+        filter: {
+          type: ["pickup_point", "terminal"],
+        },
+        size: mobile
+          ? { width: "100%", height: "430px" }
+          : { width: "100%", height: "660px" },
+      };
+    };
 
     const createOrRestartWidget = () => {
       const api = window.YaDelivery;
       const container = document.getElementById(CONTAINER_ID);
       if (!api || !container) return;
 
-      const mode = currentMode();
-      const config = widgetConfigForViewport();
-
-      if (lastViewportModeRef.current === mode) return;
+      const sig = configSignature();
+      if (lastConfigSigRef.current === sig) return;
 
       container.innerHTML = "";
-      lastViewportModeRef.current = mode;
+      lastConfigSigRef.current = sig;
 
       api.createWidget({
         containerId: CONTAINER_ID,
-        params: {
-          city: "Москва",
-          delivery_price: " ",
-          delivery_term: "от 1 дня",
-          show_select_button: config.showSelectButton,
-          filter: {
-            type: ["pickup_point", "terminal"],
-          },
-          size: config.size,
-        },
+        params: buildParams(),
       });
     };
 
@@ -224,18 +265,13 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
       debounceId = setTimeout(() => {
         debounceId = null;
         setIsMobile(isMobileViewport());
-
-        const mode = currentMode();
-        if (lastViewportModeRef.current !== mode) {
-          lastViewportModeRef.current = null;
-        }
-
+        lastConfigSigRef.current = null;
         createOrRestartWidget();
       }, DEBOUNCE_MS);
     };
 
     const handleYaNddWidgetLoad = () => {
-      lastViewportModeRef.current = null;
+      lastConfigSigRef.current = null;
       setIsMobile(isMobileViewport());
       createOrRestartWidget();
     };
@@ -250,7 +286,7 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
     };
 
     if (window.YaDelivery) {
-      lastViewportModeRef.current = null;
+      lastConfigSigRef.current = null;
       setIsMobile(isMobileViewport());
       createOrRestartWidget();
     } else {
@@ -265,31 +301,40 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
       document.removeEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
       window.removeEventListener("resize", scheduleResizeRestart);
       document.removeEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
-      lastViewportModeRef.current = null;
+      lastConfigSigRef.current = null;
     };
-  }, []);
+  }, [variant, fullscreenH]);
+
+  const containerClass =
+    variant === "fullscreen"
+      ? "box-border w-full overflow-hidden"
+      : isMobile
+        ? "box-border h-[430px] w-full overflow-hidden"
+        : "box-border h-[660px] w-full overflow-hidden";
+
+  const containerStyle =
+    variant === "fullscreen" ? { height: `${fullscreenH}px`, minHeight: `${fullscreenH}px` } : undefined;
 
   return (
-    <div className="mx-auto w-full max-w-full overflow-x-hidden">
-      <h3 className="mb-4 font-serif text-[22px] leading-[1.1] text-ink md:mb-3 md:text-xl lg:text-2xl">
-        Выберите пункт выдачи
-      </h3>
+    <div className="mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col overflow-x-hidden">
+      {showHeading ? (
+        <h3 className="mb-4 font-serif text-[22px] leading-[1.1] text-ink md:mb-3 md:text-xl lg:text-2xl">
+          Выберите пункт выдачи
+        </h3>
+      ) : null}
 
-      <div className="w-full max-w-full overflow-hidden rounded-[28px] border border-ink/10 bg-white/50">
-        <div
-          id={CONTAINER_ID}
-          className={isMobile ? "box-border h-[430px] w-full" : "box-border h-[660px] w-full"}
-        />
+      <div className="w-full max-w-full min-h-0 flex-1 overflow-hidden rounded-[28px] border border-ink/10 bg-white/50">
+        <div id={CONTAINER_ID} className={containerClass} style={containerStyle} />
       </div>
 
-      {selectedPickup && (
+      {showLocalSummary && selectedPickup ? (
         <div className="mt-4 rounded-2xl border border-ink/10 bg-sand/35 p-4 text-sm text-ink/90">
           <p className="mb-2 font-medium">Выбран пункт выдачи:</p>
           <p>Тип: {selectedPickup.pickup_type === "terminal" ? "постамат" : "ПВЗ"}</p>
           <p>Полный адрес: {selectedPickup.pickup_address || "Адрес не указан"}</p>
           <p>ID: {selectedPickup.pickup_id || "—"}</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

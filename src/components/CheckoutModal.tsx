@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 import { LiquidButton } from "./ui/liquid-glass-button";
 import { useCallback, useEffect, useState } from "react";
 import DeliveryWidget from "./DeliveryWidget";
+import MobilePickupFullscreen from "./MobilePickupFullscreen";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { validateOrderFields } from "../lib/orderValidation";
 import type { SelectedPickup } from "../types/selectedPickup";
 
@@ -17,12 +19,20 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [mobilePickupOpen, setMobilePickupOpen] = useState(false);
+
+  const isMobileLayout = useMediaQuery("(max-width: 767px)");
 
   const handlePickupChange = useCallback((pickup: SelectedPickup) => {
     setSelectedPickup(pickup);
     setOrderError(null);
     setOrderSuccess(null);
   }, []);
+
+  const handleMobilePickupSelected = useCallback((pickup: SelectedPickup) => {
+    handlePickupChange(pickup);
+    setMobilePickupOpen(false);
+  }, [handlePickupChange]);
 
   useEffect(() => {
     if (isOpen) {
@@ -34,6 +44,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     return () => {
       document.body.style.overflow = "unset";
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setMobilePickupOpen(false);
+    }
   }, [isOpen]);
 
   const handleCreateOrder = async () => {
@@ -123,6 +139,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   if (!isOpen) return null;
 
   return (
+    <>
     <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden">
       <div className="pointer-events-none fixed inset-0 bg-ink/80 backdrop-blur-sm" aria-hidden />
       <div className="relative z-[1] flex min-h-full items-start justify-center px-4 pb-6 pt-16 md:px-0 md:pb-8 sm:pt-24">
@@ -206,7 +223,61 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               </div>
 
               <div className="mt-10 w-full max-w-full overflow-x-hidden border-t border-ink/10 pt-8">
-                <DeliveryWidget onPickupChange={handlePickupChange} />
+                {isMobileLayout ? (
+                  <div className="space-y-4">
+                    <h3 className="font-serif text-[22px] leading-[1.1] text-ink">
+                      Пункт выдачи
+                    </h3>
+
+                    {selectedPickup?.pickup_id ? (
+                      <div className="space-y-3 rounded-2xl border border-ink/15 bg-sand/30 p-4 text-sm text-ink/90">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs uppercase tracking-wider text-ink/50">
+                            Тип
+                          </span>
+                          <span className="font-medium">
+                            {selectedPickup.pickup_type === "terminal"
+                              ? "Постамат"
+                              : "ПВЗ"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs uppercase tracking-wider text-ink/50">
+                            Адрес
+                          </span>
+                          <span>
+                            {selectedPickup.pickup_address || "—"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs uppercase tracking-wider text-ink/50">
+                            ID
+                          </span>
+                          <span className="font-mono text-xs">
+                            {selectedPickup.pickup_id}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setMobilePickupOpen(true)}
+                          className="w-full rounded-full border border-ink/20 bg-transparent py-3 text-center text-sm font-medium text-ink transition-colors hover:border-gold hover:text-ink"
+                        >
+                          Изменить пункт
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setMobilePickupOpen(true)}
+                        className="w-full rounded-full border border-ink/25 bg-ink/5 py-4 text-center font-serif text-base font-medium text-ink transition-colors hover:border-gold hover:bg-ink/10"
+                      >
+                        Выбрать пункт выдачи
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <DeliveryWidget onPickupChange={handlePickupChange} />
+                )}
               </div>
 
               <div className="mt-6 w-full max-w-full pt-6 md:mt-8 md:pt-8">
@@ -244,5 +315,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         </div>
       </div>
     </div>
+
+    <MobilePickupFullscreen
+      isOpen={isMobileLayout && mobilePickupOpen}
+      onClose={() => setMobilePickupOpen(false)}
+      onPickupSelected={handleMobilePickupSelected}
+    />
+    </>
   );
 }
