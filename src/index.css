@@ -213,12 +213,12 @@ h6,
     font-size: 16px !important;
   }
 
-  /* Высота = params.size.height в createWidget (520px mobile), без max-height — иначе «рвётся» карта и шапка */
+  /* Виджет Яндекс на mobile: высокая цельная область */
   #delivery-widget {
     width: 100% !important;
     max-width: 100% !important;
-    height: 520px !important;
-    min-height: 520px !important;
+    height: 720px !important;
+    min-height: 720px !important;
     max-height: none !important;
     overflow: hidden !important;
     box-sizing: border-box !important;

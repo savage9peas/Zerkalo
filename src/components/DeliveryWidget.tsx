@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SelectedPickup, PickupType } from "../types/selectedPickup";
 
 interface YaDeliveryCreateWidgetConfig {
@@ -48,27 +48,13 @@ declare global {
 
 const CONTAINER_ID = "delivery-widget";
 
-const WIDGET_PARAMS_BASE: Omit<YaDeliveryCreateWidgetConfig["params"], "size"> = {
-  city: "Москва",
-  delivery_price: " ",
-  delivery_term: "от 1 дня",
-  show_select_button: true,
-  filter: {
-    type: ["pickup_point", "terminal"],
-  },
-};
-
-/** Должно совпадать с высотой контейнера и с index.css (#delivery-widget на mobile). size нельзя менять через setParams — только повторный createWidget. */
 function isMobileViewport(): boolean {
   return typeof window !== "undefined" && window.innerWidth < 768;
 }
 
 function widgetSizeForViewport(): { height: string; width: string } {
-  if (typeof window === "undefined") {
-    return { height: "620px", width: "100%" };
-  }
   return isMobileViewport()
-    ? { height: "520px", width: "100%" }
+    ? { height: "720px", width: "100%" }
     : { height: "620px", width: "100%" };
 }
 
@@ -126,18 +112,20 @@ function extractAddressString(source: Record<string, unknown>): string | undefin
       return nested.trim();
     }
   }
+
   const direct =
     (source.full_address as string | undefined) ??
     (source.fullAddress as string | undefined) ??
     (source.address_line as string | undefined) ??
     (source.formatted_address as string | undefined);
+
   if (typeof direct === "string" && direct.trim()) {
     return direct.trim();
   }
+
   return undefined;
 }
 
-/** Преобразует detail события в единый объект для формы и заказа. */
 export function mapWidgetDetailToSelectedPickup(
   detail: YaNddWidgetPointSelectedDetail
 ): SelectedPickup {
@@ -163,6 +151,7 @@ export function mapWidgetDetailToSelectedPickup(
 
   const rawAddress =
     fromSource ?? fromRoot ?? source.full_address ?? root.full_address ?? fallbackAddress;
+
   const pickup_address = typeof rawAddress === "string" ? rawAddress.trim() : "";
 
   const typeRaw = source.type ?? root.type;
@@ -187,6 +176,11 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
   const onPickupChangeRef = useRef(onPickupChange);
   onPickupChangeRef.current = onPickupChange;
 
+  const isMobile = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 768;
+  }, []);
+
   useEffect(() => {
     const DEBOUNCE_MS = 200;
     let debounceId: ReturnType<typeof setTimeout> | null = null;
@@ -205,11 +199,19 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
         return;
       }
 
+      container.innerHTML = "";
       lastViewportModeRef.current = mode;
+
       api.createWidget({
         containerId: CONTAINER_ID,
         params: {
-          ...WIDGET_PARAMS_BASE,
+          city: "Москва",
+          delivery_price: " ",
+          delivery_term: "от 1 дня",
+          show_select_button: true,
+          filter: {
+            type: ["pickup_point", "terminal"],
+          },
           size: widgetSizeForViewport(),
         },
       });
@@ -219,6 +221,7 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
       if (debounceId !== null) {
         clearTimeout(debounceId);
       }
+
       debounceId = setTimeout(() => {
         debounceId = null;
         const mode = currentMode();
@@ -236,9 +239,8 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
 
     const handleYaNddWidgetPointSelected = (event: Event) => {
       const customEvent = event as CustomEvent<YaNddWidgetPointSelectedDetail>;
-      if (!customEvent.detail) {
-        return;
-      }
+      if (!customEvent.detail) return;
+
       const pickup = mapWidgetDetailToSelectedPickup(customEvent.detail);
       setSelectedPickup(pickup);
       onPickupChangeRef.current?.(pickup);
@@ -266,17 +268,21 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
   }, []);
 
   return (
-    <div className="w-full max-w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
-      <h3 className="font-serif text-lg md:text-xl lg:text-2xl">Выберите пункт выдачи</h3>
+    <div className="mx-auto w-full max-w-full overflow-x-hidden">
+      {!isMobile && (
+        <h3 className="mb-3 font-serif text-lg md:text-xl lg:text-2xl">
+          Выберите пункт выдачи
+        </h3>
+      )}
 
-      <div className="w-full max-w-full overflow-hidden rounded-xl md:rounded-2xl border border-ink/15 bg-white/40">
+      <div className="w-full max-w-full overflow-hidden rounded-2xl border border-ink/15 bg-white/40">
         <div
           id={CONTAINER_ID}
-          className="w-full h-[520px] md:h-[620px] box-border overflow-hidden"
+          className="box-border h-[720px] w-full overflow-hidden md:h-[620px]"
         />
       </div>
 
-      {selectedPickup && (
+      {!isMobile && selectedPickup && (
         <div className="mt-4 rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">
           <p className="mb-2 font-medium">Выбран пункт выдачи:</p>
           <p>
