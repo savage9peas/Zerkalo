@@ -58,13 +58,14 @@ const WIDGET_PARAMS_BASE: Omit<YaDeliveryCreateWidgetConfig["params"], "size"> =
   },
 };
 
+/** Фиксированные высоты iframe виджета: одна область, без усечения карты/шапки на мобиле. */
 function widgetSizeForViewport(): { height: string; width: string } {
   if (typeof window === "undefined") {
     return { height: "540px", width: "100%" };
   }
   const narrow = window.matchMedia("(max-width: 767px)").matches;
   return narrow
-    ? { height: "300px", width: "100%" }
+    ? { height: "480px", width: "100%" }
     : { height: "540px", width: "100%" };
 }
 
@@ -232,13 +233,13 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
   }, []);
 
   return (
-    <div className="w-full max-w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
+    <div className="delivery-widget-shell relative w-full max-w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
       <h3 className="font-serif text-lg md:text-xl lg:text-2xl">Выберите пункт выдачи</h3>
 
       <div className="w-full max-w-full overflow-hidden rounded-xl md:rounded-2xl border border-ink/15 bg-white/40">
         <div
           id={CONTAINER_ID}
-          className="delivery-widget-host w-full h-[300px] min-h-[280px] max-h-[300px] md:h-[540px] md:min-h-[520px] md:max-h-none box-border"
+          className="delivery-widget-host relative w-full h-[480px] md:h-[540px] box-border overflow-hidden"
         />
       </div>
 
