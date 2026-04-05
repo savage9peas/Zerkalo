@@ -26,9 +26,9 @@ export default function Hero({ onOpenCheckout }: HeroProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-[70%] md:max-w-[50%] text-ivory"
+         className="w-full md:max-w-[60%] text-ivory"
         >
-          <h1 className="font-serif text-[102px] md:text-[179px] lg:text-[205px] leading-[0.9] mb-6 tracking-tight">
+          <h1 className="font-serif text-[160px] md:text-[285px] lg:text-[330px] leading-[0.9] mb-6 tracking-tight">
             Зеркало <br />
             <span className="italic font-light">Венеры</span>
           </h1>
@@ -40,7 +40,7 @@ export default function Hero({ onOpenCheckout }: HeroProps) {
           {/* +60% */}
           <LiquidButton 
             onClick={onOpenCheckout} 
-            className="px-14 py-6 font-serif font-medium text-[20px] md:text-[24px] uppercase tracking-[0.1em] text-ivory/90"
+            className="px-[88px] py-[38px] font-serif font-medium text-[32px] md:text-[38px] uppercase tracking-[0.1em] text-ivory/90"
           >
             Заказать
           </LiquidButton>
