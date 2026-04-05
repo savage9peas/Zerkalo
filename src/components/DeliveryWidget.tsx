@@ -47,12 +47,9 @@ declare global {
 }
 
 const CONTAINER_ID = "delivery-widget";
-const WIDGET_PARAMS: YaDeliveryCreateWidgetConfig["params"] = {
+
+const WIDGET_PARAMS_BASE: Omit<YaDeliveryCreateWidgetConfig["params"], "size"> = {
   city: "Москва",
-  size: {
-    height: "550px",
-    width: "100%",
-  },
   delivery_price: " ",
   delivery_term: "от 1 дня",
   show_select_button: true,
@@ -60,6 +57,16 @@ const WIDGET_PARAMS: YaDeliveryCreateWidgetConfig["params"] = {
     type: ["pickup_point", "terminal"],
   },
 };
+
+function widgetSizeForViewport(): { height: string; width: string } {
+  if (typeof window === "undefined") {
+    return { height: "540px", width: "100%" };
+  }
+  const narrow = window.matchMedia("(max-width: 767px)").matches;
+  return narrow
+    ? { height: "300px", width: "100%" }
+    : { height: "540px", width: "100%" };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -86,7 +93,8 @@ function extractPickupId(detail: unknown): string {
     return direct;
   }
 
-  const nested = [detail.point, detail.payload, detail.data?.point];
+  const dataNode = isRecord(detail.data) ? detail.data : undefined;
+  const nested = [detail.point, detail.payload, dataNode?.point];
   for (const node of nested) {
     if (isRecord(node)) {
       const id = tryObj(node);
@@ -190,7 +198,10 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
       isWidgetInitializedRef.current = true;
       api.createWidget({
         containerId: CONTAINER_ID,
-        params: WIDGET_PARAMS,
+        params: {
+          ...WIDGET_PARAMS_BASE,
+          size: widgetSizeForViewport(),
+        },
       });
     };
 
@@ -221,15 +232,18 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
   }, []);
 
   return (
-    <div className="w-full max-w-full space-y-4 mx-auto">
-      <h3 className="font-serif text-base md:text-xl lg:text-2xl">Выберите пункт выдачи</h3>
+    <div className="w-full max-w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
+      <h3 className="font-serif text-lg md:text-xl lg:text-2xl">Выберите пункт выдачи</h3>
 
-      <div className="w-full max-w-full overflow-hidden rounded-2xl border border-ink/15 bg-white/40">
-        <div id={CONTAINER_ID} className="w-full min-h-[500px]" />
+      <div className="w-full max-w-full overflow-hidden rounded-xl md:rounded-2xl border border-ink/15 bg-white/40">
+        <div
+          id={CONTAINER_ID}
+          className="delivery-widget-host w-full h-[300px] min-h-[280px] max-h-[300px] md:h-[540px] md:min-h-[520px] md:max-h-none box-border"
+        />
       </div>
 
       {selectedPickup && (
-        <div className="rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">
+        <div className="mt-4 rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">
           <p className="mb-2 font-medium">Выбран пункт выдачи:</p>
           <p>
             Тип: {selectedPickup.pickup_type === "terminal" ? "постамат" : "ПВЗ"}

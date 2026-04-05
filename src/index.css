@@ -135,16 +135,6 @@ h6,
     max-width: 100%;
   }
 
-  h2 {
-    font-size: 24px !important;
-    line-height: 1.1 !important;
-  }
-
-  h3 {
-    font-size: 20px !important;
-    line-height: 1.15 !important;
-  }
-
   p {
     line-height: 1.45;
   }
@@ -225,13 +215,18 @@ h6,
     font-size: 16px !important;
   }
 
-  /* блок виджета Яндекс */
+  /* блок виджета Яндекс — компактная высота на мобиле */
   #delivery-widget {
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 500px !important;
+    min-height: 280px !important;
+    max-height: 300px !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+  }
+
+  .delivery-widget-host {
+    overflow-x: hidden !important;
   }
 
   /* возможные контейнеры виджета */

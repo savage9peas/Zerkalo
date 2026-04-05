@@ -147,7 +147,7 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
           <X className="w-5 h-5" />
         </button>
         
-        <div className="px-4 py-8 md:px-10 md:py-10">
+        <div className="px-4 py-8 md:px-10 md:py-10 w-full max-w-full overflow-x-hidden box-border">
           <div className="text-center mb-10">
             <h2 className="font-serif text-3xl md:text-4xl mb-3">Оформление заказа</h2>
             <p className="font-sans text-sm tracking-widest uppercase text-gold">Зеркало Венеры &bull; 1990 ₽</p>
@@ -155,7 +155,7 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
 
           <form
             id="checkout-order-form"
-            className="space-y-6 font-sans"
+            className="space-y-6 md:space-y-7 font-sans w-full max-w-full overflow-x-hidden"
             onSubmit={(e) => {
               e.preventDefault();
               void handleCreateOrder();
@@ -209,11 +209,11 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
               />
             </div>
 
-            <div className="mt-10 w-full max-w-full mx-auto overflow-hidden">
+            <div className="mt-10 pt-8 border-t border-ink/10 w-full max-w-full mx-auto overflow-x-hidden">
               <DeliveryWidget onPickupChange={handlePickupChange} />
             </div>
 
-            <div className="pt-8">
+            <div className="pt-10 mt-2 w-full max-w-full">
               {orderSuccess && (
                 <div
                   role="status"
