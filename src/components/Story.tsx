@@ -58,12 +58,12 @@ export default function Story() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="flex-1 w-full max-w-full aspect-[3/4] md:aspect-square relative overflow-hidden bg-sand rounded-2xl isolate"
+          className="flex-1 w-full max-w-full min-h-[320px] aspect-[3/4] md:aspect-square relative overflow-hidden bg-sand rounded-2xl"
         >
           {!loadFailed ? (
             <video
               ref={videoRef}
-              className="absolute inset-0 z-0 w-full h-full object-cover"
+              className="absolute inset-0 z-0 h-full w-full object-cover pointer-events-auto"
               autoPlay
               muted
               loop

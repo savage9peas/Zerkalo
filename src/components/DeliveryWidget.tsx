@@ -58,15 +58,18 @@ const WIDGET_PARAMS_BASE: Omit<YaDeliveryCreateWidgetConfig["params"], "size"> =
   },
 };
 
-/** Фиксированные высоты iframe виджета: одна область, без усечения карты/шапки на мобиле. */
+/** Документация Яндекса: height только в px; width — px или %. size нельзя менять через setParams — только повторный createWidget (рестарт). */
+function isMobileViewport(): boolean {
+  return typeof window !== "undefined" && window.innerWidth < 768;
+}
+
 function widgetSizeForViewport(): { height: string; width: string } {
   if (typeof window === "undefined") {
-    return { height: "540px", width: "100%" };
+    return { height: "620px", width: "100%" };
   }
-  const narrow = window.matchMedia("(max-width: 767px)").matches;
-  return narrow
-    ? { height: "480px", width: "100%" }
-    : { height: "540px", width: "100%" };
+  return isMobileViewport()
+    ? { height: "520px", width: "100%" }
+    : { height: "620px", width: "100%" };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -177,26 +180,37 @@ interface DeliveryWidgetProps {
   onPickupChange?: (pickup: SelectedPickup) => void;
 }
 
+type ViewportMode = "mobile" | "desktop";
+
 export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) {
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
-  const isWidgetInitializedRef = useRef(false);
+  const lastViewportModeRef = useRef<ViewportMode | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
   onPickupChangeRef.current = onPickupChange;
 
   useEffect(() => {
-    const initializeWidget = () => {
+    const DEBOUNCE_MS = 200;
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+
+    const currentMode = (): ViewportMode => (isMobileViewport() ? "mobile" : "desktop");
+
+    /**
+     * По документации Яндекса: повторный вызов createWidget выполняет рестарт виджета
+     * (нужно при смене mobile/desktop, т.к. size нельзя менять через setParams).
+     */
+    const createOrRestartWidget = () => {
       const api = window.YaDelivery;
       const container = document.getElementById(CONTAINER_ID);
-
       if (!api || !container) {
         return;
       }
 
-      if (isWidgetInitializedRef.current) {
+      const mode = currentMode();
+      if (lastViewportModeRef.current === mode) {
         return;
       }
 
-      isWidgetInitializedRef.current = true;
+      lastViewportModeRef.current = mode;
       api.createWidget({
         containerId: CONTAINER_ID,
         params: {
@@ -204,6 +218,25 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
           size: widgetSizeForViewport(),
         },
       });
+    };
+
+    const scheduleCreateOrRestart = () => {
+      if (debounceId !== null) {
+        clearTimeout(debounceId);
+      }
+      debounceId = setTimeout(() => {
+        debounceId = null;
+        const mode = currentMode();
+        if (lastViewportModeRef.current !== mode) {
+          lastViewportModeRef.current = null;
+        }
+        createOrRestartWidget();
+      }, DEBOUNCE_MS);
+    };
+
+    const handleYaNddWidgetLoad = () => {
+      lastViewportModeRef.current = null;
+      createOrRestartWidget();
     };
 
     const handleYaNddWidgetPointSelected = (event: Event) => {
@@ -219,32 +252,39 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
     };
 
     if (window.YaDelivery) {
-      initializeWidget();
+      lastViewportModeRef.current = null;
+      createOrRestartWidget();
     } else {
-      document.addEventListener("YaNddWidgetLoad", initializeWidget);
+      document.addEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
     }
 
+    window.addEventListener("resize", scheduleCreateOrRestart);
     document.addEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
 
     return () => {
-      document.removeEventListener("YaNddWidgetLoad", initializeWidget);
+      if (debounceId !== null) {
+        clearTimeout(debounceId);
+      }
+      document.removeEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
+      window.removeEventListener("resize", scheduleCreateOrRestart);
       document.removeEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
+      lastViewportModeRef.current = null;
     };
   }, []);
 
   return (
-    <div className="delivery-widget-shell relative w-full max-w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
+    <div className="delivery-widget-shell w-full max-w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
       <h3 className="font-serif text-lg md:text-xl lg:text-2xl">Выберите пункт выдачи</h3>
 
-      <div className="w-full max-w-full overflow-hidden rounded-xl md:rounded-2xl border border-ink/15 bg-white/40">
+      <div className="w-full max-w-full overflow-hidden rounded-xl md:rounded-2xl border border-ink/15 bg-white/40 mb-6">
         <div
           id={CONTAINER_ID}
-          className="delivery-widget-host relative w-full h-[480px] md:h-[540px] box-border overflow-hidden"
+          className="w-full h-[520px] md:h-[620px] box-border overflow-hidden"
         />
       </div>
 
       {selectedPickup && (
-        <div className="mt-4 rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">
+        <div className="rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">
           <p className="mb-2 font-medium">Выбран пункт выдачи:</p>
           <p>
             Тип: {selectedPickup.pickup_type === "terminal" ? "постамат" : "ПВЗ"}

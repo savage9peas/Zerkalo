@@ -126,6 +126,24 @@ h6,
   transform: translateY(0);
 }
 
+/* Hero CTA: 18px, не наследует mobile-правило для кнопок формы */
+.hero-order-cta {
+  font-size: 18px !important;
+}
+
+/* Единственный контейнер виджета Яндекса — ширина и overflow на всех breakpoints */
+#delivery-widget {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.delivery-widget-shell {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 /* ---------- Mobile fixes ---------- */
 @media (max-width: 768px) {
   html,
@@ -207,34 +225,12 @@ h6,
     border-radius: 22px !important;
   }
 
-  /* форма */
+  /* форма: 16px у полей и кнопки оформления; hero-кнопка не в этой форме */
   input,
   textarea,
   select,
-  button {
+  #checkout-order-form button {
     font-size: 16px !important;
-  }
-
-  /*
-   * Яндекс ПВЗ: одна высота с API createWidget — без max-height,
-   * иначе карта обрезается сверху, а панель «Я.Доставка» визуально «отрывается» внизу.
-   */
-  #delivery-widget {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 480px !important;
-    min-height: 480px !important;
-    max-height: none !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-    position: relative !important;
-  }
-
-  .delivery-widget-shell,
-  .delivery-widget-host {
-    position: relative !important;
-    overflow-x: hidden !important;
-    max-width: 100% !important;
   }
 
   /* возможные контейнеры виджета */

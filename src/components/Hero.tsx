@@ -40,18 +40,18 @@ export default function Hero({ onOpenCheckout }: HeroProps) {
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-full md:max-w-[50%] text-ivory"
         >
-          <h1 className="font-serif font-normal text-[44px] md:text-[72px] leading-[1.05] mb-4 md:mb-5 tracking-tight">
+          <h1 className="font-serif font-normal text-[52px] md:text-[84px] leading-[0.95] mb-4 md:mb-5 tracking-tight">
             Зеркало <br />
             <span className="italic font-normal">Венеры</span>
           </h1>
-          <p className="font-sans text-[18px] md:text-[22px] leading-[1.4] opacity-[0.85] mb-8 md:mb-10 max-w-full md:max-w-lg">
+          <p className="font-sans text-[20px] md:text-[24px] leading-[1.35] mb-8 md:mb-10 max-w-full md:max-w-lg">
             Твоё истинное отражение.
           </p>
           
           <LiquidButton
             onClick={onOpenCheckout}
             size="default"
-            className="!h-auto !min-h-0 text-[16px] px-7 py-3.5 font-serif font-medium tracking-[0.05em] rounded-full text-ivory/90 hover:scale-100"
+            className="hero-order-cta !h-auto !min-h-0 text-[18px] py-[14px] px-[28px] font-serif font-medium rounded-full text-ivory/90 hover:scale-100"
           >
             Заказать
           </LiquidButton>

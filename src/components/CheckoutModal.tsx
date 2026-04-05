@@ -214,11 +214,11 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
               />
             </div>
 
-            <div className="mt-10 pt-8 border-t border-ink/10 w-full max-w-full mx-auto overflow-x-hidden mb-10">
+            <div className="mt-10 pt-8 border-t border-ink/10 w-full max-w-full mx-auto overflow-x-hidden">
               <DeliveryWidget onPickupChange={handlePickupChange} />
             </div>
 
-            <div className="w-full max-w-full clear-both pt-0">
+            <div className="w-full max-w-full mt-10 pt-2">
               {orderSuccess && (
                 <div
                   role="status"
