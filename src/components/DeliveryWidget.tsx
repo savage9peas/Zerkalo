@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SelectedPickup, PickupType } from "../types/selectedPickup";
 
 interface YaDeliveryCreateWidgetConfig {
@@ -52,10 +52,21 @@ function isMobileViewport(): boolean {
   return typeof window !== "undefined" && window.innerWidth < 768;
 }
 
-function widgetSizeForViewport(): { height: string; width: string } {
-  return isMobileViewport()
-    ? { height: "720px", width: "100%" }
-    : { height: "620px", width: "100%" };
+function widgetConfigForViewport() {
+  const mobile = isMobileViewport();
+
+  return {
+    size: mobile
+      ? {
+          width: "100%",
+          height: "920px",
+        }
+      : {
+          width: "100%",
+          height: "660px",
+        },
+    showSelectButton: !mobile,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -79,18 +90,15 @@ function extractPickupId(detail: unknown): string {
   }
 
   const direct = tryObj(detail);
-  if (direct) {
-    return direct;
-  }
+  if (direct) return direct;
 
   const dataNode = isRecord(detail.data) ? detail.data : undefined;
   const nested = [detail.point, detail.payload, dataNode?.point];
+
   for (const node of nested) {
     if (isRecord(node)) {
       const id = tryObj(node);
-      if (id) {
-        return id;
-      }
+      if (id) return id;
     }
   }
 
@@ -99,15 +107,18 @@ function extractPickupId(detail: unknown): string {
 
 function extractAddressString(source: Record<string, unknown>): string | undefined {
   const addr = source.address;
+
   if (typeof addr === "string" && addr.trim()) {
     return addr.trim();
   }
+
   if (isRecord(addr)) {
     const nested =
       (addr.full_address as string | undefined) ??
       (addr.formatted as string | undefined) ??
       (addr.value as string | undefined) ??
       (addr.fullAddress as string | undefined);
+
     if (typeof nested === "string" && nested.trim()) {
       return nested.trim();
     }
@@ -130,6 +141,7 @@ export function mapWidgetDetailToSelectedPickup(
   detail: YaNddWidgetPointSelectedDetail
 ): SelectedPickup {
   const root = detail as unknown as Record<string, unknown>;
+
   const source =
     (isRecord(detail.point) ? detail.point : null) ??
     (isRecord(detail.payload) ? detail.payload : null) ??
@@ -140,12 +152,8 @@ export function mapWidgetDetailToSelectedPickup(
 
   const fromSource = extractAddressString(source as Record<string, unknown>);
   const fromRoot = extractAddressString(root);
-  const fallbackAddress = [
-    source.locality,
-    source.street,
-    source.house,
-    source.comment,
-  ]
+
+  const fallbackAddress = [source.locality, source.street, source.house, source.comment]
     .filter((part) => Boolean(part && String(part).trim()))
     .join(", ");
 
@@ -172,14 +180,11 @@ type ViewportMode = "mobile" | "desktop";
 
 export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) {
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(isMobileViewport());
   const lastViewportModeRef = useRef<ViewportMode | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
-  onPickupChangeRef.current = onPickupChange;
 
-  const isMobile = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 768;
-  }, []);
+  onPickupChangeRef.current = onPickupChange;
 
   useEffect(() => {
     const DEBOUNCE_MS = 200;
@@ -190,14 +195,12 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
     const createOrRestartWidget = () => {
       const api = window.YaDelivery;
       const container = document.getElementById(CONTAINER_ID);
-      if (!api || !container) {
-        return;
-      }
+      if (!api || !container) return;
 
       const mode = currentMode();
-      if (lastViewportModeRef.current === mode) {
-        return;
-      }
+      const config = widgetConfigForViewport();
+
+      if (lastViewportModeRef.current === mode) return;
 
       container.innerHTML = "";
       lastViewportModeRef.current = mode;
@@ -208,32 +211,36 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
           city: "Москва",
           delivery_price: " ",
           delivery_term: "от 1 дня",
-          show_select_button: true,
+          show_select_button: config.showSelectButton,
           filter: {
             type: ["pickup_point", "terminal"],
           },
-          size: widgetSizeForViewport(),
+          size: config.size,
         },
       });
     };
 
     const scheduleResizeRestart = () => {
-      if (debounceId !== null) {
-        clearTimeout(debounceId);
-      }
+      if (debounceId !== null) clearTimeout(debounceId);
 
       debounceId = setTimeout(() => {
         debounceId = null;
+
+        const mobileNow = isMobileViewport();
+        setIsMobile(mobileNow);
+
         const mode = currentMode();
         if (lastViewportModeRef.current !== mode) {
           lastViewportModeRef.current = null;
         }
+
         createOrRestartWidget();
       }, DEBOUNCE_MS);
     };
 
     const handleYaNddWidgetLoad = () => {
       lastViewportModeRef.current = null;
+      setIsMobile(isMobileViewport());
       createOrRestartWidget();
     };
 
@@ -248,6 +255,7 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
 
     if (window.YaDelivery) {
       lastViewportModeRef.current = null;
+      setIsMobile(isMobileViewport());
       createOrRestartWidget();
     } else {
       document.addEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
@@ -257,9 +265,7 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
     document.addEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
 
     return () => {
-      if (debounceId !== null) {
-        clearTimeout(debounceId);
-      }
+      if (debounceId !== null) clearTimeout(debounceId);
       document.removeEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
       window.removeEventListener("resize", scheduleResizeRestart);
       document.removeEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
@@ -269,25 +275,21 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
 
   return (
     <div className="mx-auto w-full max-w-full overflow-x-hidden">
-      {!isMobile && (
-        <h3 className="mb-3 font-serif text-lg md:text-xl lg:text-2xl">
-          Выберите пункт выдачи
-        </h3>
-      )}
+      <h3 className="mb-4 font-serif text-[22px] leading-[1.1] text-ink md:mb-3 md:text-xl lg:text-2xl">
+        Выберите пункт выдачи
+      </h3>
 
-      <div className="w-full max-w-full overflow-hidden rounded-2xl border border-ink/15 bg-white/40">
+      <div className="w-full max-w-full overflow-hidden rounded-[28px] border border-ink/10 bg-white/50">
         <div
           id={CONTAINER_ID}
-          className="box-border h-[720px] w-full overflow-hidden md:h-[620px]"
+          className={isMobile ? "box-border h-[920px] w-full" : "box-border h-[660px] w-full"}
         />
       </div>
 
-      {!isMobile && selectedPickup && (
-        <div className="mt-4 rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">
+      {selectedPickup && (
+        <div className="mt-4 rounded-2xl border border-ink/10 bg-sand/35 p-4 text-sm text-ink/90">
           <p className="mb-2 font-medium">Выбран пункт выдачи:</p>
-          <p>
-            Тип: {selectedPickup.pickup_type === "terminal" ? "постамат" : "ПВЗ"}
-          </p>
+          <p>Тип: {selectedPickup.pickup_type === "terminal" ? "постамат" : "ПВЗ"}</p>
           <p>Полный адрес: {selectedPickup.pickup_address || "Адрес не указан"}</p>
           <p>ID: {selectedPickup.pickup_id || "—"}</p>
         </div>

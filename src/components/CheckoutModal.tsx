@@ -14,7 +14,6 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  /** Единственный источник истины для ПВЗ после YaNddWidgetPointSelected */
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
@@ -25,15 +24,15 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setOrderSuccess(null);
   }, []);
 
-  // Prevent scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
+
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -48,15 +47,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       amount: 1,
     };
 
-    console.log("[order submit] selectedPickup state:", selectedPickup);
-    console.log(payload);
-
     const localCheck = validateOrderFields({
       name: payload.name,
       phone: payload.phone,
       pickup_id: payload.pickup_id,
       pickup_address: payload.pickup_address,
     });
+
     if (!localCheck.ok) {
       const error = localCheck as { ok: false; message: string };
       setOrderError(error.message);
@@ -76,19 +73,9 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       });
 
       const orderData = (await orderRes.json()) as Record<string, unknown>;
-      console.log("order response", orderData);
 
-      console.log("🔥 ORDER ID FOR PAYMENT:", orderData?.id);
-
-const paymentPayload = {
-  orderId: String(orderData?.id ?? ""),
-};
-
-console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
       if (orderRes.status === 400) {
-        setOrderError(
-          String(orderData.error ?? "Проверьте данные заказа.")
-        );
+        setOrderError(String(orderData.error ?? "Проверьте данные заказа."));
         setOrderSuccess(null);
         return;
       }
@@ -97,7 +84,9 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
         throw new Error("Failed to create order");
       }
 
-      const order = orderData as { id: string };
+      const paymentPayload = {
+        orderId: String(orderData?.id ?? ""),
+      };
 
       try {
         const paymentRes = await fetch("http://localhost:4000/api/payment/create", {
@@ -107,13 +96,10 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
           },
           body: JSON.stringify(paymentPayload),
         });
-        const payment = (await paymentRes.json().catch(() => ({}))) as Record<
-          string,
-          unknown
-        >;
-        console.log("payment response", payment);
 
+        const payment = (await paymentRes.json().catch(() => ({}))) as Record<string, unknown>;
         const paymentStatus = typeof payment.status === "string" ? payment.status : "";
+
         if (paymentRes.ok && paymentStatus === "pending_payment") {
           setOrderSuccess("Заказ создан, оплата подготовлена");
           alert("Заказ создан, оплата подготовлена");
@@ -138,113 +124,121 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
 
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden">
-      <div
-        className="fixed inset-0 bg-ink/80 backdrop-blur-sm pointer-events-none"
-        aria-hidden
-      />
-      <div className="relative z-[1] flex min-h-full items-start justify-center px-4 md:px-0 pt-16 pb-4 sm:pt-24 sm:pb-6">
-        <div className="bg-ivory w-full max-w-full sm:max-w-[min(100%,50rem)] mx-auto flex flex-col rounded-xl shadow-2xl relative text-ink mb-16">
-          <button 
+      <div className="pointer-events-none fixed inset-0 bg-ink/80 backdrop-blur-sm" aria-hidden />
+      <div className="relative z-[1] flex min-h-full items-start justify-center px-4 pb-6 pt-16 md:px-0 md:pb-8 sm:pt-24">
+        <div className="relative mx-auto mb-16 flex w-full max-w-full flex-col rounded-xl bg-ivory text-ink shadow-2xl sm:max-w-[min(100%,50rem)]">
+          <button
             onClick={onClose}
-            className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-ink/50 hover:text-ink transition-colors bg-sand rounded-full z-10"
+            className="absolute right-4 top-4 z-10 rounded-full bg-sand p-2 text-ink/50 transition-colors hover:text-ink md:right-6 md:top-6"
             aria-label="Закрыть"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
-          
-          <div className="px-4 py-8 md:px-10 md:py-10 w-full max-w-full overflow-x-hidden box-border">
-            <div className="text-center mb-10">
-              <h2 className="font-serif text-3xl md:text-4xl mb-3">Оформление заказа</h2>
-              <p className="font-sans text-sm tracking-widest uppercase text-gold">Зеркало Венеры &bull; 1990 ₽</p>
+
+          <div className="box-border w-full max-w-full overflow-x-hidden px-4 py-8 md:px-10 md:py-10">
+            <div className="mb-10 text-center">
+              <h2 className="mb-3 font-serif text-3xl md:text-4xl">Оформление заказа</h2>
+              <p className="font-sans text-sm uppercase tracking-widest text-gold">
+                Зеркало Венеры • 1990 ₽
+              </p>
             </div>
 
             <form
               id="checkout-order-form"
-              className="space-y-6 md:space-y-7 font-sans w-full max-w-full overflow-x-hidden"
+              className="w-full max-w-full space-y-6 overflow-x-hidden font-sans md:space-y-7"
               onSubmit={(e) => {
                 e.preventDefault();
                 void handleCreateOrder();
               }}
             >
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-ink/60 mb-2">ФИО *</label>
-              <input 
-                type="text" 
-                required
-                placeholder="Ваше ФИО" 
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setOrderError(null);
-                  setOrderSuccess(null);
-                }}
-                className="w-full bg-transparent border-b border-ink/20 py-3 text-ink placeholder:text-ink/30 focus:outline-none focus:border-gold transition-colors"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-ink/60 mb-2">Телефон *</label>
-              <input 
-                type="tel" 
-                required
-                placeholder="+7 (999) 000-00-00" 
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
-                  setOrderError(null);
-                  setOrderSuccess(null);
-                }}
-                className="w-full bg-transparent border-b border-ink/20 py-3 text-ink placeholder:text-ink/30 focus:outline-none focus:border-gold transition-colors"
-              />
-            </div>
+              <div>
+                <label className="mb-2 block text-xs uppercase tracking-widest text-ink/60">
+                  ФИО *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ваше ФИО"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setOrderError(null);
+                    setOrderSuccess(null);
+                  }}
+                  className="w-full border-b border-ink/20 bg-transparent py-3 text-ink placeholder:text-ink/30 transition-colors focus:border-gold focus:outline-none"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-ink/60 mb-2">Email *</label>
-              <input 
-                type="email" 
-                required
-                placeholder="your@email.com" 
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setOrderError(null);
-                  setOrderSuccess(null);
-                }}
-                className="w-full bg-transparent border-b border-ink/20 py-3 text-ink placeholder:text-ink/30 focus:outline-none focus:border-gold transition-colors"
-              />
-            </div>
+              <div>
+                <label className="mb-2 block text-xs uppercase tracking-widest text-ink/60">
+                  Телефон *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="+7 (999) 000-00-00"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setOrderError(null);
+                    setOrderSuccess(null);
+                  }}
+                  className="w-full border-b border-ink/20 bg-transparent py-3 text-ink placeholder:text-ink/30 transition-colors focus:border-gold focus:outline-none"
+                />
+              </div>
 
-            <div className="mt-10 pt-8 border-t border-ink/10 w-full max-w-full mx-auto overflow-x-hidden">
-              <DeliveryWidget onPickupChange={handlePickupChange} />
-            </div>
+              <div>
+                <label className="mb-2 block text-xs uppercase tracking-widest text-ink/60">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setOrderError(null);
+                    setOrderSuccess(null);
+                  }}
+                  className="w-full border-b border-ink/20 bg-transparent py-3 text-ink placeholder:text-ink/30 transition-colors focus:border-gold focus:outline-none"
+                />
+              </div>
 
-            <div className="pt-10 mt-2 w-full max-w-full">
-              {orderSuccess && (
-                <div
-                  role="status"
-                  className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+              <div className="mt-10 w-full max-w-full overflow-x-hidden border-t border-ink/10 pt-8">
+                <DeliveryWidget onPickupChange={handlePickupChange} />
+              </div>
+
+              <div className="mt-6 w-full max-w-full pt-6 md:mt-8 md:pt-8">
+                {orderSuccess && (
+                  <div
+                    role="status"
+                    className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+                  >
+                    {orderSuccess}
+                  </div>
+                )}
+
+                {orderError && (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+                  >
+                    {orderError}
+                  </div>
+                )}
+
+                <LiquidButton
+                  type="submit"
+                  className="w-full py-5 font-serif text-base font-light uppercase tracking-[0.1em] text-ink md:text-lg"
                 >
-                  {orderSuccess}
-                </div>
-              )}
-              {orderError && (
-                <div
-                  role="alert"
-                  className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
-                >
-                  {orderError}
-                </div>
-              )}
-              <LiquidButton
-                type="submit"
-                className="w-full py-5 font-serif font-light text-base md:text-lg uppercase tracking-[0.1em] text-ink"
-              >
-                Оформить заказ
-              </LiquidButton>
-              <p className="text-[10px] text-ink/40 text-center mt-6 uppercase tracking-wider leading-relaxed">
-                Нажимая "Оплатить", вы соглашаетесь с условиями оферты и политикой обработки данных.
-              </p>
-            </div>
+                  Оформить заказ
+                </LiquidButton>
+
+                <p className="mt-6 text-center text-[10px] uppercase tracking-wider leading-relaxed text-ink/40">
+                  Нажимая "Оплатить", вы соглашаетесь с условиями оферты и политикой обработки данных.
+                </p>
+              </div>
             </form>
           </div>
         </div>
