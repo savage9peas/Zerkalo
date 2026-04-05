@@ -59,7 +59,7 @@ function widgetConfigForViewport() {
     size: mobile
       ? {
           width: "100%",
-          height: "920px",
+          height: "760px",
         }
       : {
           width: "100%",
@@ -279,10 +279,16 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
         Выберите пункт выдачи
       </h3>
 
-      <div className="w-full max-w-full overflow-hidden rounded-[28px] border border-ink/10 bg-white/50">
+      <div
+        className={
+          isMobile
+            ? "w-full max-w-full rounded-[28px] border border-ink/10 bg-white/50"
+            : "w-full max-w-full overflow-hidden rounded-[28px] border border-ink/10 bg-white/50"
+        }
+      >
         <div
           id={CONTAINER_ID}
-          className={isMobile ? "box-border h-[920px] w-full" : "box-border h-[660px] w-full"}
+          className={isMobile ? "box-border h-[760px] w-full" : "box-border h-[660px] w-full"}
         />
       </div>
 

@@ -149,7 +149,6 @@ h6,
     max-width: 100% !important;
   }
 
-  /* общие секции и контейнеры */
   main,
   section,
   article,
@@ -159,7 +158,6 @@ h6,
     box-sizing: border-box !important;
   }
 
-  /* типичные tailwind-контейнеры */
   .max-w-7xl,
   .max-w-6xl,
   .max-w-5xl,
@@ -199,38 +197,21 @@ h6,
     padding-bottom: 48px !important;
   }
 
-  /* карточки */
   .rounded-3xl,
   .rounded-\[32px\],
   .rounded-\[28px\] {
     border-radius: 22px !important;
   }
 
-  /* форма */
   input,
   textarea,
   select {
     font-size: 16px !important;
   }
 
-  /* Виджет Яндекс на mobile: высокая цельная область */
-  #delivery-widget {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 920px !important;
-    height: 920px !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-  }
-  
-  @media (min-width: 768px) {
-    #delivery-widget {
-      min-height: 660px !important;
-      height: 660px !important;
-    }
-  }
+  /* Не задаём высоту #delivery-widget здесь —
+     она должна управляться только из DeliveryWidget.tsx */
 
-  /* возможные контейнеры виджета */
   .delivery-widget-container,
   .delivery-widget-wrapper,
   .delivery-widget-section,
@@ -238,7 +219,6 @@ h6,
   .widget-wrapper {
     width: 100% !important;
     max-width: 100% !important;
-    overflow: hidden !important;
     box-sizing: border-box !important;
   }
 
