@@ -58,14 +58,18 @@ const WIDGET_PARAMS_BASE: Omit<YaDeliveryCreateWidgetConfig["params"], "size"> =
   },
 };
 
+/** Должно совпадать с высотой контейнера и с index.css (#delivery-widget на mobile). size нельзя менять через setParams — только повторный createWidget. */
+function isMobileViewport(): boolean {
+  return typeof window !== "undefined" && window.innerWidth < 768;
+}
+
 function widgetSizeForViewport(): { height: string; width: string } {
   if (typeof window === "undefined") {
-    return { height: "540px", width: "100%" };
+    return { height: "620px", width: "100%" };
   }
-  const narrow = window.matchMedia("(max-width: 767px)").matches;
-  return narrow
-    ? { height: "300px", width: "100%" }
-    : { height: "540px", width: "100%" };
+  return isMobileViewport()
+    ? { height: "520px", width: "100%" }
+    : { height: "620px", width: "100%" };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -172,30 +176,36 @@ export function mapWidgetDetailToSelectedPickup(
 }
 
 interface DeliveryWidgetProps {
-  /** Вызывается при каждом выборе точки; ref внутри гарантирует актуальный колбэк без перевешивания слушателя. */
   onPickupChange?: (pickup: SelectedPickup) => void;
 }
 
+type ViewportMode = "mobile" | "desktop";
+
 export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) {
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
-  const isWidgetInitializedRef = useRef(false);
+  const lastViewportModeRef = useRef<ViewportMode | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
   onPickupChangeRef.current = onPickupChange;
 
   useEffect(() => {
-    const initializeWidget = () => {
+    const DEBOUNCE_MS = 200;
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+
+    const currentMode = (): ViewportMode => (isMobileViewport() ? "mobile" : "desktop");
+
+    const createOrRestartWidget = () => {
       const api = window.YaDelivery;
       const container = document.getElementById(CONTAINER_ID);
-
       if (!api || !container) {
         return;
       }
 
-      if (isWidgetInitializedRef.current) {
+      const mode = currentMode();
+      if (lastViewportModeRef.current === mode) {
         return;
       }
 
-      isWidgetInitializedRef.current = true;
+      lastViewportModeRef.current = mode;
       api.createWidget({
         containerId: CONTAINER_ID,
         params: {
@@ -205,29 +215,53 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
       });
     };
 
+    const scheduleResizeRestart = () => {
+      if (debounceId !== null) {
+        clearTimeout(debounceId);
+      }
+      debounceId = setTimeout(() => {
+        debounceId = null;
+        const mode = currentMode();
+        if (lastViewportModeRef.current !== mode) {
+          lastViewportModeRef.current = null;
+        }
+        createOrRestartWidget();
+      }, DEBOUNCE_MS);
+    };
+
+    const handleYaNddWidgetLoad = () => {
+      lastViewportModeRef.current = null;
+      createOrRestartWidget();
+    };
+
     const handleYaNddWidgetPointSelected = (event: Event) => {
       const customEvent = event as CustomEvent<YaNddWidgetPointSelectedDetail>;
       if (!customEvent.detail) {
         return;
       }
-      console.log("YaNddWidgetPointSelected detail:", customEvent.detail);
-
       const pickup = mapWidgetDetailToSelectedPickup(customEvent.detail);
       setSelectedPickup(pickup);
       onPickupChangeRef.current?.(pickup);
     };
 
     if (window.YaDelivery) {
-      initializeWidget();
+      lastViewportModeRef.current = null;
+      createOrRestartWidget();
     } else {
-      document.addEventListener("YaNddWidgetLoad", initializeWidget);
+      document.addEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
     }
 
+    window.addEventListener("resize", scheduleResizeRestart);
     document.addEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
 
     return () => {
-      document.removeEventListener("YaNddWidgetLoad", initializeWidget);
+      if (debounceId !== null) {
+        clearTimeout(debounceId);
+      }
+      document.removeEventListener("YaNddWidgetLoad", handleYaNddWidgetLoad);
+      window.removeEventListener("resize", scheduleResizeRestart);
       document.removeEventListener("YaNddWidgetPointSelected", handleYaNddWidgetPointSelected);
+      lastViewportModeRef.current = null;
     };
   }, []);
 
@@ -238,7 +272,7 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
       <div className="w-full max-w-full overflow-hidden rounded-xl md:rounded-2xl border border-ink/15 bg-white/40">
         <div
           id={CONTAINER_ID}
-          className="delivery-widget-host w-full h-[300px] min-h-[280px] max-h-[300px] md:h-[540px] md:min-h-[520px] md:max-h-none box-border"
+          className="w-full h-[520px] md:h-[620px] box-border overflow-hidden"
         />
       </div>
 

@@ -213,20 +213,15 @@ h6,
     font-size: 16px !important;
   }
 
-  /* блок виджета Яндекс — НЕ режем его по высоте */
+  /* Высота = params.size.height в createWidget (520px mobile), без max-height — иначе «рвётся» карта и шапка */
   #delivery-widget {
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 520px !important;
     height: 520px !important;
+    min-height: 520px !important;
+    max-height: none !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-  }
-
-  .delivery-widget-host {
-    overflow-x: hidden !important;
-    width: 100% !important;
-    max-width: 100% !important;
   }
 
   /* возможные контейнеры виджета */
