@@ -33,18 +33,18 @@ export default function Hero({ onOpenCheckout }: HeroProps) {
       </div>
 
       {/* Content container */}
-      <div className="relative z-10 w-full h-full flex flex-col justify-end md:justify-center px-6 pb-16 md:px-16 lg:px-24 max-w-7xl mx-auto">
+      <div className="relative z-10 w-full max-w-full h-full flex flex-col justify-end md:justify-center px-4 md:px-16 lg:px-24 pb-16 mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-[65%] md:max-w-[50%] text-ivory"
+          className="w-full max-w-full md:max-w-[50%] text-ivory"
         >
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-5 tracking-tight">
+          <h1 className="font-serif text-4xl md:text-6xl lg:text-8xl leading-[0.9] mb-5 tracking-tight">
             Зеркало <br />
             <span className="italic font-light">Венеры</span>
           </h1>
-          <p className="font-sans text-sm md:text-base font-light tracking-wide mb-10 opacity-90 max-w-[160px] md:max-w-sm leading-relaxed">
+          <p className="font-sans text-base md:text-xl font-light tracking-wide mb-10 opacity-90 max-w-full md:max-w-sm leading-relaxed">
             Твоё истинное отражение.
           </p>
           

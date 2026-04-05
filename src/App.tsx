@@ -17,7 +17,7 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   return (
-    <main className="min-h-screen bg-ivory font-sans text-ink selection:bg-gold selection:text-ivory">
+    <main className="min-h-screen w-full max-w-full bg-ivory font-sans text-ink selection:bg-gold selection:text-ivory">
       <GlassFilter />
       <Hero onOpenCheckout={() => setIsCheckoutOpen(true)} />
       <Story />

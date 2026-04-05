@@ -221,14 +221,12 @@ export default function DeliveryWidget({ onPickupChange }: DeliveryWidgetProps) 
   }, []);
 
   return (
-    <div className="space-y-4 w-full max-w-[800px] mx-auto">
-      <h3 className="font-serif text-xl md:text-2xl">Выберите пункт выдачи</h3>
+    <div className="w-full max-w-full space-y-4 mx-auto">
+      <h3 className="font-serif text-base md:text-xl lg:text-2xl">Выберите пункт выдачи</h3>
 
-      <div
-        id={CONTAINER_ID}
-        className="w-full overflow-hidden rounded-lg border border-ink/15 bg-white/40"
-        style={{ minHeight: "550px" }}
-      />
+      <div className="w-full max-w-full overflow-hidden rounded-2xl border border-ink/15 bg-white/40">
+        <div id={CONTAINER_ID} className="w-full min-h-[500px]" />
+      </div>
 
       {selectedPickup && (
         <div className="rounded-lg border border-ink/20 bg-sand/35 p-4 text-sm text-ink/90">

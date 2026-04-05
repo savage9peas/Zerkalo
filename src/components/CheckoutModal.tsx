@@ -137,8 +137,8 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-16 sm:p-6 sm:pt-24 bg-ink/80 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-ivory w-full max-w-[800px] flex flex-col rounded-xl shadow-2xl relative text-ink mb-16">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center px-4 md:px-0 pt-16 pb-4 sm:pt-24 sm:pb-6 bg-ink/80 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
+      <div className="bg-ivory w-full max-w-full sm:max-w-[min(100%,50rem)] mx-auto flex flex-col rounded-xl shadow-2xl relative text-ink mb-16">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-ink/50 hover:text-ink transition-colors bg-sand rounded-full z-10"
@@ -147,7 +147,7 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
           <X className="w-5 h-5" />
         </button>
         
-        <div className="p-8 md:p-10">
+        <div className="px-4 py-8 md:px-10 md:py-10">
           <div className="text-center mb-10">
             <h2 className="font-serif text-3xl md:text-4xl mb-3">Оформление заказа</h2>
             <p className="font-sans text-sm tracking-widest uppercase text-gold">Зеркало Венеры &bull; 1990 ₽</p>
@@ -209,7 +209,7 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
               />
             </div>
 
-            <div className="mt-10 w-full mx-auto">
+            <div className="mt-10 w-full max-w-full mx-auto overflow-hidden">
               <DeliveryWidget onPickupChange={handlePickupChange} />
             </div>
 
