@@ -126,24 +126,6 @@ h6,
   transform: translateY(0);
 }
 
-/* Hero CTA: 18px, не наследует mobile-правило для кнопок формы */
-.hero-order-cta {
-  font-size: 18px !important;
-}
-
-/* Единственный контейнер виджета Яндекса — ширина и overflow на всех breakpoints */
-#delivery-widget {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.delivery-widget-shell {
-  overflow-x: hidden;
-  max-width: 100%;
-}
-
 /* ---------- Mobile fixes ---------- */
 @media (max-width: 768px) {
   html,
@@ -225,12 +207,26 @@ h6,
     border-radius: 22px !important;
   }
 
-  /* форма: 16px у полей и кнопки оформления; hero-кнопка не в этой форме */
+  /* форма */
   input,
   textarea,
   select,
-  #checkout-order-form button {
+  button {
     font-size: 16px !important;
+  }
+
+  /* блок виджета Яндекс — компактная высота на мобиле */
+  #delivery-widget {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 280px !important;
+    max-height: 300px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .delivery-widget-host {
+    overflow-x: hidden !important;
   }
 
   /* возможные контейнеры виджета */

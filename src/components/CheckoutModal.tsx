@@ -137,35 +137,30 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden">
-      <div
-        className="fixed inset-0 bg-ink/80 backdrop-blur-sm pointer-events-none"
-        aria-hidden
-      />
-      <div className="relative z-[1] flex min-h-full items-start justify-center px-4 md:px-0 pt-16 pb-4 sm:pt-24 sm:pb-6">
-        <div className="bg-ivory w-full max-w-full sm:max-w-[min(100%,50rem)] mx-auto flex flex-col rounded-xl shadow-2xl relative text-ink mb-16">
-          <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-ink/50 hover:text-ink transition-colors bg-sand rounded-full z-10"
-            aria-label="Закрыть"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          
-          <div className="px-4 py-8 md:px-10 md:py-10 w-full max-w-full overflow-x-hidden box-border">
-            <div className="text-center mb-10">
-              <h2 className="font-serif text-3xl md:text-4xl mb-3">Оформление заказа</h2>
-              <p className="font-sans text-sm tracking-widest uppercase text-gold">Зеркало Венеры &bull; 1990 ₽</p>
-            </div>
+    <div className="fixed inset-0 z-[100] flex items-start justify-center px-4 md:px-0 pt-16 pb-4 sm:pt-24 sm:pb-6 bg-ink/80 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
+      <div className="bg-ivory w-full max-w-full sm:max-w-[min(100%,50rem)] mx-auto flex flex-col rounded-xl shadow-2xl relative text-ink mb-16">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-ink/50 hover:text-ink transition-colors bg-sand rounded-full z-10"
+          aria-label="Закрыть"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        
+        <div className="px-4 py-8 md:px-10 md:py-10 w-full max-w-full overflow-x-hidden box-border">
+          <div className="text-center mb-10">
+            <h2 className="font-serif text-3xl md:text-4xl mb-3">Оформление заказа</h2>
+            <p className="font-sans text-sm tracking-widest uppercase text-gold">Зеркало Венеры &bull; 1990 ₽</p>
+          </div>
 
-            <form
-              id="checkout-order-form"
-              className="space-y-6 md:space-y-7 font-sans w-full max-w-full overflow-x-hidden"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handleCreateOrder();
-              }}
-            >
+          <form
+            id="checkout-order-form"
+            className="space-y-6 md:space-y-7 font-sans w-full max-w-full overflow-x-hidden"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleCreateOrder();
+            }}
+          >
             <div>
               <label className="block text-xs uppercase tracking-widest text-ink/60 mb-2">ФИО *</label>
               <input 
@@ -218,7 +213,7 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
               <DeliveryWidget onPickupChange={handlePickupChange} />
             </div>
 
-            <div className="w-full max-w-full mt-10 pt-2">
+            <div className="pt-10 mt-2 w-full max-w-full">
               {orderSuccess && (
                 <div
                   role="status"
@@ -245,8 +240,7 @@ console.log("🔥 PAYMENT PAYLOAD:", paymentPayload);
                 Нажимая "Оплатить", вы соглашаетесь с условиями оферты и политикой обработки данных.
               </p>
             </div>
-            </form>
-          </div>
+          </form>
         </div>
       </div>
     </div>
