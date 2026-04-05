@@ -23,7 +23,8 @@ export default function Story() {
   return (
     <section className="overflow-x-hidden bg-ivory px-6 py-24 text-ink md:px-16 md:py-40 lg:px-24">
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 md:flex-row md:gap-24">
-        {/* Text */}
+        
+        {/* TEXT */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -53,18 +54,18 @@ export default function Story() {
           </div>
         </motion.div>
 
-        {/* Video */}
+        {/* VIDEO */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-full flex-1 overflow-hidden rounded-2xl bg-sand"
+          className="w-full flex-1 max-w-full overflow-hidden rounded-2xl bg-sand aspect-[9/16]"
         >
           {!loadFailed ? (
             <video
               ref={videoRef}
-              className="block h-auto w-full object-contain"
+              className="w-full h-full object-cover"
               src="/story/story.mp4"
               autoPlay
               muted
@@ -78,7 +79,7 @@ export default function Story() {
               }}
             />
           ) : (
-            <div className="flex min-h-[420px] items-center justify-center bg-sand px-6 text-center">
+            <div className="flex h-full items-center justify-center bg-sand px-6 text-center">
               <p className="font-sans text-sm leading-relaxed text-ink/70">
                 Видео не найдено. Проверь файл{" "}
                 <code className="rounded bg-ink/5 px-1.5 py-0.5 text-xs text-ink">
@@ -88,6 +89,7 @@ export default function Story() {
             </div>
           )}
         </motion.div>
+
       </div>
     </section>
   );
