@@ -28,14 +28,12 @@ export default function Hero({ onOpenCheckout }: HeroProps) {
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-[70%] md:max-w-[50%] text-ivory"
         >
-          {/* +60% */}
-          <h1 className="font-serif text-[64px] md:text-[112px] lg:text-[128px] leading-[0.9] mb-6 tracking-tight">
+          <h1 className="font-serif text-[102px] md:text-[179px] lg:text-[205px] leading-[0.9] mb-6 tracking-tight">
             Зеркало <br />
             <span className="italic font-light">Венеры</span>
           </h1>
 
-          {/* +60% */}
-          <p className="font-sans text-[16px] md:text-[20px] font-light tracking-wide mb-12 opacity-90 max-w-[240px] md:max-w-md leading-relaxed">
+          <p className="font-sans text-[26px] md:text-[32px] font-light tracking-wide mb-12 opacity-90 max-w-[240px] md:max-w-md leading-relaxed">
             Твоё истинное отражение.
           </p>
           
