@@ -327,8 +327,8 @@ export default function DeliveryWidget({
 const containerStyle =
   variant === "fullscreen"
     ? {
-        height: `${fullscreenH + 48}px`,
-        transform: "translateY(-48px)",
+        height: `${fullscreenH + 88}px`,
+        transform: "translateY(-88px)",
       }
     : undefined;
   return (
