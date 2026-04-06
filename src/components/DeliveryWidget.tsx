@@ -54,14 +54,11 @@ function isMobileViewport(): boolean {
 
 function fullscreenWidgetHeightPx(): number {
   if (typeof window === "undefined") {
-    return 460;
+    return 420;
   }
 
-  // Было слишком агрессивно: innerHeight - 88.
-  // На iPhone нужно оставлять больше места под header/padding/safe-area.
-  const raw = window.innerHeight - 150;
-
-  return Math.max(360, Math.min(raw, 560));
+  const raw = window.innerHeight - 190;
+  return Math.max(340, Math.min(raw, 500));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -183,7 +180,7 @@ export default function DeliveryWidget({
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(isMobileViewport());
   const [fullscreenH, setFullscreenH] = useState<number>(() =>
-    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 460
+    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 420
   );
   const lastConfigSigRef = useRef<string | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
