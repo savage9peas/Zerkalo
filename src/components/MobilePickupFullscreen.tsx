@@ -19,12 +19,12 @@ export default function MobilePickupFullscreen({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex flex-col bg-ivory text-ink"
+      className="fixed inset-0 z-[200] flex min-h-[100dvh] flex-col bg-ivory text-ink"
       role="dialog"
       aria-modal="true"
       aria-label="Выбор пункта выдачи"
     >
-      <header className="flex shrink-0 items-center gap-3 border-b border-ink/10 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <header className="flex shrink-0 items-center gap-3 border-b border-ink/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={onClose}
@@ -33,11 +33,15 @@ export default function MobilePickupFullscreen({
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h2 className="flex-1 text-center font-serif text-lg font-normal">Пункт выдачи</h2>
+
+        <h2 className="flex-1 text-center font-serif text-[20px] font-normal leading-none">
+          Пункт выдачи
+        </h2>
+
         <span className="w-10 shrink-0" aria-hidden />
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <DeliveryWidget
           variant="fullscreen"
           showHeading={false}

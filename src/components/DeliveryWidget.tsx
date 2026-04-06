@@ -54,9 +54,14 @@ function isMobileViewport(): boolean {
 
 function fullscreenWidgetHeightPx(): number {
   if (typeof window === "undefined") {
-    return 520;
+    return 460;
   }
-  return Math.max(320, window.innerHeight - 88);
+
+  // Было слишком агрессивно: innerHeight - 88.
+  // На iPhone нужно оставлять больше места под header/padding/safe-area.
+  const raw = window.innerHeight - 150;
+
+  return Math.max(360, Math.min(raw, 560));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -164,10 +169,8 @@ export type DeliveryWidgetVariant = "default" | "fullscreen";
 
 export interface DeliveryWidgetProps {
   onPickupChange?: (pickup: SelectedPickup) => void;
-  /** default: в модалке checkout; fullscreen: полноэкранный шаг на мобиле */
   variant?: DeliveryWidgetVariant;
   showHeading?: boolean;
-  /** Сводку после выбора показывает родитель (модалка), не виджет */
   showLocalSummary?: boolean;
 }
 
@@ -180,7 +183,7 @@ export default function DeliveryWidget({
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(isMobileViewport());
   const [fullscreenH, setFullscreenH] = useState<number>(() =>
-    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 520
+    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 460
   );
   const lastConfigSigRef = useRef<string | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
@@ -190,13 +193,18 @@ export default function DeliveryWidget({
   variantRef.current = variant;
 
   useEffect(() => {
-    if (variant !== "fullscreen") {
-      return;
-    }
-    const upd = () => setFullscreenH(fullscreenWidgetHeightPx());
-    upd();
-    window.addEventListener("resize", upd);
-    return () => window.removeEventListener("resize", upd);
+    if (variant !== "fullscreen") return;
+
+    const updateHeight = () => {
+      setFullscreenH(fullscreenWidgetHeightPx());
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+    };
   }, [variant]);
 
   useEffect(() => {
@@ -213,8 +221,8 @@ export default function DeliveryWidget({
 
     const buildParams = (): YaDeliveryCreateWidgetConfig["params"] => {
       const v = variantRef.current;
+
       if (v === "fullscreen") {
-        const h = fullscreenH;
         return {
           city: "Москва",
           delivery_price: " ",
@@ -223,11 +231,15 @@ export default function DeliveryWidget({
           filter: {
             type: ["pickup_point", "terminal"],
           },
-          size: { width: "100%", height: `${h}px` },
+          size: {
+            width: "100%",
+            height: `${fullscreenH}px`,
+          },
         };
       }
 
       const mobile = isMobileViewport();
+
       return {
         city: "Москва",
         delivery_price: " ",
@@ -307,13 +319,15 @@ export default function DeliveryWidget({
 
   const containerClass =
     variant === "fullscreen"
-      ? "box-border w-full overflow-hidden"
+      ? "box-border h-full w-full overflow-hidden"
       : isMobile
         ? "box-border h-[430px] w-full overflow-hidden"
         : "box-border h-[660px] w-full overflow-hidden";
 
   const containerStyle =
-    variant === "fullscreen" ? { height: `${fullscreenH}px`, minHeight: `${fullscreenH}px` } : undefined;
+    variant === "fullscreen"
+      ? { height: `${fullscreenH}px`, minHeight: `${fullscreenH}px` }
+      : undefined;
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col overflow-x-hidden">
