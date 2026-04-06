@@ -54,11 +54,14 @@ function isMobileViewport(): boolean {
 
 function fullscreenWidgetHeightPx(): number {
   if (typeof window === "undefined") {
-    return 420;
+    return 640;
   }
 
-  const raw = window.innerHeight - 190;
-  return Math.max(340, Math.min(raw, 500));
+  const safeTop = 16;
+  const headerHeight = 76;
+  const verticalPadding = 12;
+
+  return window.innerHeight - safeTop - headerHeight - verticalPadding;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -180,7 +183,7 @@ export default function DeliveryWidget({
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(isMobileViewport());
   const [fullscreenH, setFullscreenH] = useState<number>(() =>
-    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 420
+    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 640
   );
   const lastConfigSigRef = useRef<string | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
@@ -323,7 +326,7 @@ export default function DeliveryWidget({
 
   const containerStyle =
     variant === "fullscreen"
-      ? { height: `${fullscreenH}px`, minHeight: `${fullscreenH}px` }
+      ? { height: `${fullscreenH}px` }
       : undefined;
 
   return (

@@ -41,7 +41,7 @@ export default function MobilePickupFullscreen({
         <span className="w-10 shrink-0" aria-hidden />
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="flex min-h-0 flex-1 flex-col px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <DeliveryWidget
           variant="fullscreen"
           showHeading={false}
