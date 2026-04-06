@@ -318,17 +318,19 @@ export default function DeliveryWidget({
   }, [variant, fullscreenH]);
 
   const containerClass =
-    variant === "fullscreen"
-      ? "box-border h-full w-full overflow-hidden"
-      : isMobile
-        ? "box-border h-[430px] w-full overflow-hidden"
-        : "box-border h-[660px] w-full overflow-hidden";
+  variant === "fullscreen"
+    ? "box-border h-full w-full overflow-hidden"
+    : isMobile
+      ? "box-border h-[430px] w-full overflow-hidden"
+      : "box-border h-[660px] w-full overflow-hidden";
 
-  const containerStyle =
-    variant === "fullscreen"
-      ? { height: `${fullscreenH}px` }
-      : undefined;
-
+const containerStyle =
+  variant === "fullscreen"
+    ? {
+        height: `${fullscreenH + 48}px`,
+        transform: "translateY(-48px)",
+      }
+    : undefined;
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col overflow-x-hidden">
       {showHeading ? (
