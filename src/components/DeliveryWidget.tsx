@@ -54,14 +54,17 @@ function isMobileViewport(): boolean {
 
 function fullscreenWidgetHeightPx(): number {
   if (typeof window === "undefined") {
-    return 640;
+    return 560;
   }
 
   const safeTop = 16;
   const headerHeight = 76;
-  const verticalPadding = 12;
+  const verticalPadding = 24;
 
-  return window.innerHeight - safeTop - headerHeight - verticalPadding;
+  return Math.max(
+    420,
+    window.innerHeight - safeTop - headerHeight - verticalPadding
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -183,7 +186,7 @@ export default function DeliveryWidget({
   const [selectedPickup, setSelectedPickup] = useState<SelectedPickup | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(isMobileViewport());
   const [fullscreenH, setFullscreenH] = useState<number>(() =>
-    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 640
+    typeof window !== "undefined" ? fullscreenWidgetHeightPx() : 560
   );
   const lastConfigSigRef = useRef<string | null>(null);
   const onPickupChangeRef = useRef(onPickupChange);
@@ -318,19 +321,17 @@ export default function DeliveryWidget({
   }, [variant, fullscreenH]);
 
   const containerClass =
-  variant === "fullscreen"
-    ? "box-border h-full w-full overflow-hidden"
-    : isMobile
-      ? "box-border h-[430px] w-full overflow-hidden"
-      : "box-border h-[660px] w-full overflow-hidden";
+    variant === "fullscreen"
+      ? "box-border h-full w-full overflow-hidden"
+      : isMobile
+        ? "box-border h-[430px] w-full overflow-hidden"
+        : "box-border h-[660px] w-full overflow-hidden";
 
-const containerStyle =
-  variant === "fullscreen"
-    ? {
-        height: `${fullscreenH + 88}px`,
-        transform: "translateY(-88px)",
-      }
-    : undefined;
+  const containerStyle =
+    variant === "fullscreen"
+      ? { height: `${fullscreenH}px` }
+      : undefined;
+
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col overflow-x-hidden">
       {showHeading ? (
