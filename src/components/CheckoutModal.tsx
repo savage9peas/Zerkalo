@@ -325,4 +325,4 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       />
     </>
   );
-}}
+}
