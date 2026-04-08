@@ -327,13 +327,15 @@ export default function DeliveryWidget({
       ? "box-border h-[430px] w-full overflow-hidden"
       : "box-border h-[660px] w-full overflow-hidden";
 
-const containerStyle =
-  variant === "fullscreen"
-    ? {
-        height: `${fullscreenH + 92}px`,
-        transform: "translateY(-92px)",
-      }
-    : undefined;
+      const OFFSET = 100;
+
+      const containerStyle =
+        variant === "fullscreen"
+          ? {
+              height: `${fullscreenH + OFFSET}px`,
+              transform: `translateY(-${OFFSET}px)`,
+            }
+          : undefined;
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col overflow-x-hidden">
@@ -343,9 +345,13 @@ const containerStyle =
         </h3>
       ) : null}
 
-      <div className="w-full max-w-full min-h-0 flex-1 overflow-hidden rounded-[28px] border border-ink/10 bg-white/50">
-        <div id={CONTAINER_ID} className={containerClass} style={containerStyle} />
-      </div>
+<div className="w-full min-h-0 flex-1">
+  <div
+    id={CONTAINER_ID}
+    className={containerClass}
+    style={containerStyle}
+  />
+</div>
 
       {showLocalSummary && selectedPickup ? (
         <div className="mt-4 rounded-2xl border border-ink/10 bg-sand/35 p-4 text-sm text-ink/90">
