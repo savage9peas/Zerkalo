@@ -83,7 +83,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setOrderSuccess(null);
 
     try {
-      const orderRes = await fetch("http://localhost:4000/api/order", {
+      const orderRes = await fetch("/api/order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,7 +108,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       };
 
       try {
-        const paymentRes = await fetch("http://localhost:4000/api/payment/create", {
+        const paymentRes = await fetch("/api/payment/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -147,7 +147,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         <div className="fixed inset-0 bg-ink/80 backdrop-blur-sm" aria-hidden />
 
         <div className="relative z-[1] flex min-h-screen items-stretch justify-center px-0 py-0 md:min-h-full md:px-0 md:py-8">
-          <div className="relative flex min-h-screen w-full max-w-full flex-col bg-ivory text-ink shadow-2xl md:min-h-0 md:rounded-xl md:mx-auto md:max-w-[min(100%,50rem)]">
+          <div className="relative flex min-h-screen w-full max-w-full flex-col bg-ivory text-ink shadow-2xl md:mx-auto md:min-h-0 md:max-w-[min(100%,50rem)] md:rounded-xl">
             <button
               onClick={onClose}
               className="absolute right-4 top-4 z-10 rounded-full bg-sand p-2 text-ink/50 transition-colors hover:text-ink md:right-6 md:top-6"
@@ -325,4 +325,4 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       />
     </>
   );
-}
+}}
