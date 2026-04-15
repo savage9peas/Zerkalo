@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -11,6 +12,10 @@ import { isValidOrderStatus, ORDER_STATUSES } from "./orderStatuses.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+console.log("APP_BASE_URL:", process.env.APP_BASE_URL);
+console.log("YOOKASSA_SHOP_ID exists:", Boolean(process.env.YOOKASSA_SHOP_ID));
+console.log("YOOKASSA_SECRET_KEY exists:", Boolean(process.env.YOOKASSA_SECRET_KEY));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,8 +32,7 @@ app.use(bodyParser.json());
 app.use(express.static(distPath));
 
 function getRequiredEnv(name) {
-  const value = String(process.env[name] ?? "").trim();
-  return value;
+  return String(process.env[name] ?? "").trim();
 }
 
 app.post("/api/order", (req, res) => {
@@ -162,7 +166,6 @@ app.post("/api/payment/create", async (req, res) => {
       });
     }
 
-    // Если платёж уже создавался, не создаём второй раз
     if (order.payment_id) {
       return res.status(200).json({
         orderId: order.id,
@@ -174,9 +177,10 @@ app.post("/api/payment/create", async (req, res) => {
     }
 
     const numericAmount = Number(order.amount ?? 0);
-    const amountValue = Number.isFinite(numericAmount) && numericAmount > 0
-      ? numericAmount.toFixed(2)
-      : "1.00";
+    const amountValue =
+      Number.isFinite(numericAmount) && numericAmount > 0
+        ? numericAmount.toFixed(2)
+        : "1.00";
 
     const idempotenceKey = crypto.randomUUID();
 
@@ -345,7 +349,6 @@ app.get("/api/debug/routes", (_req, res) => {
   });
 });
 
-// SPA fallback: всё, что не /api, отдаём как index.html
 app.get(/^(?!\/api).*/, (_req, res) => {
   return res.sendFile(path.join(distPath, "index.html"));
 });
