@@ -115,13 +115,19 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           },
           body: JSON.stringify(paymentPayload),
         });
-
+      
         const payment = (await paymentRes.json().catch(() => ({}))) as Record<string, unknown>;
         const paymentStatus = typeof payment.status === "string" ? payment.status : "";
-
-        if (paymentRes.ok && paymentStatus === "pending_payment") {
-          setOrderSuccess("Заказ создан, оплата подготовлена");
-          alert("Заказ создан, оплата подготовлена");
+        const paymentUrl = typeof payment.paymentUrl === "string" ? payment.paymentUrl : "";
+      
+        if (paymentRes.ok && paymentUrl) {
+          window.location.href = paymentUrl;
+          return;
+        }
+      
+        if (paymentRes.ok && paymentStatus) {
+          setOrderSuccess("Заказ создан, но ссылка на оплату не пришла");
+          alert("Заказ создан, но ссылка на оплату не пришла");
         } else {
           setOrderSuccess("Заказ создан, но оплата пока не подготовлена");
           alert("Заказ создан, но оплата пока не подготовлена");
