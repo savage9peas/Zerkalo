@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import path from "path";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import { all, get, initDb, run } from "./db.js";
@@ -24,6 +25,11 @@ app.use(
 
 app.use(bodyParser.json());
 app.use(express.static(distPath));
+
+function getRequiredEnv(name) {
+  const value = String(process.env[name] ?? "").trim();
+  return value;
+}
 
 app.post("/api/order", (req, res) => {
   try {
@@ -115,9 +121,7 @@ app.get("/api/orders", (_req, res) => {
   }
 });
 
-const PLACEHOLDER_PAYMENT_URL = "https://example.com/pay";
-
-app.post("/api/payment/create", (req, res) => {
+app.post("/api/payment/create", async (req, res) => {
   try {
     console.log("payment/create body:", req.body);
 
@@ -126,37 +130,161 @@ app.post("/api/payment/create", (req, res) => {
       return res.status(400).json({ error: "Укажите orderId." });
     }
 
-    const existing = get(`SELECT id FROM orders WHERE id = ?`, [orderId]);
-    console.log("order found:", existing);
-
-    if (!existing) {
-      return res.status(404).json({ error: "Заказ не найден." });
-    }
-
-    console.log("updating order to pending_payment:", orderId);
-
-    const updateResult = run(`UPDATE orders SET status = ? WHERE id = ?`, [
-      "pending_payment",
-      orderId,
-    ]);
-
-    if (!updateResult || updateResult.changes === 0) {
-      return res.status(500).json({ error: "Не удалось обновить статус заказа" });
-    }
-
-    const updated = get(
-      `SELECT id, status, payment_id, paid_at FROM orders WHERE id = ?`,
+    const order = get(
+      `SELECT
+        id,
+        name,
+        phone,
+        email,
+        pickup_id,
+        pickup_address,
+        amount,
+        status,
+        payment_id,
+        paid_at,
+        created_at
+      FROM orders
+      WHERE id = ?`,
       [orderId]
     );
 
+    if (!order) {
+      return res.status(404).json({ error: "Заказ не найден." });
+    }
+
+    const shopId = getRequiredEnv("YOOKASSA_SHOP_ID");
+    const secretKey = getRequiredEnv("YOOKASSA_SECRET_KEY");
+    const appBaseUrl = getRequiredEnv("APP_BASE_URL");
+
+    if (!shopId || !secretKey || !appBaseUrl) {
+      return res.status(500).json({
+        error: "Не заданы YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY или APP_BASE_URL в .env",
+      });
+    }
+
+    // Если платёж уже создавался, не создаём второй раз
+    if (order.payment_id) {
+      return res.status(200).json({
+        orderId: order.id,
+        paymentId: String(order.payment_id),
+        status: String(order.status ?? ""),
+        paymentUrl: null,
+        message: "Платеж уже создан для этого заказа.",
+      });
+    }
+
+    const numericAmount = Number(order.amount ?? 0);
+    const amountValue = Number.isFinite(numericAmount) && numericAmount > 0
+      ? numericAmount.toFixed(2)
+      : "1.00";
+
+    const idempotenceKey = crypto.randomUUID();
+
+    const yookassaResponse = await fetch("https://api.yookassa.ru/v3/payments", {
+      method: "POST",
+      headers: {
+        Authorization:
+          "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
+        "Content-Type": "application/json",
+        "Idempotence-Key": idempotenceKey,
+      },
+      body: JSON.stringify({
+        amount: {
+          value: amountValue,
+          currency: "RUB",
+        },
+        capture: true,
+        confirmation: {
+          type: "redirect",
+          return_url: `${appBaseUrl}/payment/return?orderId=${encodeURIComponent(order.id)}`,
+        },
+        description: `Заказ ${order.id}`,
+        metadata: {
+          orderId: order.id,
+          customerName: String(order.name ?? ""),
+          customerPhone: String(order.phone ?? ""),
+          customerEmail: String(order.email ?? ""),
+        },
+      }),
+    });
+
+    const payment = await yookassaResponse.json().catch(() => ({}));
+
+    if (!yookassaResponse.ok) {
+      console.error("YuKassa create payment error:", payment);
+      return res.status(500).json({
+        error: "Не удалось создать платеж в ЮKassa",
+        details: payment,
+      });
+    }
+
+    const paymentId = String(payment?.id ?? "").trim();
+    const paymentStatus = String(payment?.status ?? "").trim();
+    const confirmationUrl = String(payment?.confirmation?.confirmation_url ?? "").trim();
+
+    if (!paymentId || !confirmationUrl) {
+      console.error("YuKassa invalid payment response:", payment);
+      return res.status(500).json({
+        error: "ЮKassa не вернула paymentId или confirmation_url",
+        details: payment,
+      });
+    }
+
+    const updateResult = run(
+      `UPDATE orders
+       SET status = ?, payment_id = ?
+       WHERE id = ?`,
+      ["pending_payment", paymentId, order.id]
+    );
+
+    if (!updateResult || updateResult.changes === 0) {
+      return res.status(500).json({ error: "Не удалось сохранить payment_id в заказе" });
+    }
+
     return res.status(200).json({
-      orderId,
-      status: String(updated?.status ?? ""),
-      paymentUrl: PLACEHOLDER_PAYMENT_URL,
+      orderId: order.id,
+      paymentId,
+      status: paymentStatus,
+      paymentUrl: confirmationUrl,
     });
   } catch (error) {
     console.error("Failed to create payment:", error);
     return res.status(500).json({ message: "Failed to create payment" });
+  }
+});
+
+app.post("/api/yookassa/webhook", (req, res) => {
+  try {
+    const event = String(req.body?.event ?? "");
+    const paymentObject = req.body?.object ?? {};
+    const paymentId = String(paymentObject?.id ?? "").trim();
+
+    if (!paymentId) {
+      return res.sendStatus(400);
+    }
+
+    if (event === "payment.succeeded") {
+      run(
+        `UPDATE orders
+         SET status = ?, paid_at = ?
+         WHERE payment_id = ?`,
+        ["paid", new Date().toISOString(), paymentId]
+      );
+    }
+
+    if (event === "payment.canceled") {
+      run(
+        `UPDATE orders
+         SET status = ?
+         WHERE payment_id = ?`,
+        ["payment_canceled", paymentId]
+      );
+    }
+
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error("YuKassa webhook error:", error);
+    return res.sendStatus(500);
   }
 });
 
@@ -206,7 +334,12 @@ app.patch("/api/orders/:id/status", (req, res) => {
 app.get("/api/debug/routes", (_req, res) => {
   return res.json({
     paymentRouteMounted: "/api/payment/create",
-    post: ["POST /api/order", "POST /api/payment/create"],
+    webhookRouteMounted: "/api/yookassa/webhook",
+    post: [
+      "POST /api/order",
+      "POST /api/payment/create",
+      "POST /api/yookassa/webhook",
+    ],
     get: ["GET /api/orders", "GET /api/debug/routes"],
     patch: ["PATCH /api/orders/:id/status"],
   });
