@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import { all, get, initDb, run } from "./db.js";
 import { validateOrderBody } from "./orderValidation.js";
 import { isValidOrderStatus, ORDER_STATUSES } from "./orderStatuses.js";
+import { sendOrderPaidEmails } from "./mailer.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -16,6 +17,9 @@ const PORT = process.env.PORT || 4000;
 console.log("APP_BASE_URL:", process.env.APP_BASE_URL);
 console.log("YOOKASSA_SHOP_ID exists:", Boolean(process.env.YOOKASSA_SHOP_ID));
 console.log("YOOKASSA_SECRET_KEY exists:", Boolean(process.env.YOOKASSA_SECRET_KEY));
+console.log("SMTP_HOST exists:", Boolean(process.env.SMTP_HOST));
+console.log("SMTP_USER exists:", Boolean(process.env.SMTP_USER));
+console.log("SMTP_PASS exists:", Boolean(process.env.SMTP_PASS));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -274,6 +278,28 @@ app.post("/api/yookassa/webhook", (req, res) => {
          WHERE payment_id = ?`,
         ["paid", new Date().toISOString(), paymentId]
       );
+
+      const paidOrder = get(
+        `SELECT
+          id,
+          name,
+          phone,
+          email,
+          pickup_id,
+          pickup_address,
+          amount,
+          status,
+          payment_id,
+          paid_at,
+          created_at
+        FROM orders
+        WHERE payment_id = ?`,
+        [paymentId]
+      );
+
+      sendOrderPaidEmails(paidOrder).catch((err) => {
+        console.error("Failed to send order paid emails:", err);
+      });
     }
 
     if (event === "payment.canceled") {
