@@ -1,7 +1,4 @@
-/** Количество цифр в строке телефона (игнорируются +, пробелы, скобки, дефисы и т.д.) */
-export function countPhoneDigits(phone: string): number {
-  return phone.replace(/\D/g, "").length;
-}
+import { isCompleteRuPhone } from "./phone";
 
 export interface OrderFields {
   name: string;
@@ -16,11 +13,10 @@ export function validateOrderFields(fields: OrderFields): { ok: true } | { ok: f
     return { ok: false, message: "Укажите имя." };
   }
 
-  const digits = countPhoneDigits(fields.phone);
-  if (digits < 11) {
+  if (!isCompleteRuPhone(fields.phone)) {
     return {
       ok: false,
-      message: "Укажите телефон: нужно не меньше 11 цифр (можно с +, пробелами и дефисами).",
+      message: "Укажите телефон в формате +7 (999) 123-45-67.",
     };
   }
 

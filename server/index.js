@@ -6,10 +6,11 @@ import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
-import { all, get, initDb, run } from "./db.js";
+import { all, get, initDb, run, transaction } from "./db.js";
 import { validateOrderBody } from "./orderValidation.js";
 import { isValidOrderStatus, ORDER_STATUSES } from "./orderStatuses.js";
 import { sendOrderPaidEmails } from "./mailer.js";
+import { normalizeRuPhone } from "./phone.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -39,6 +40,42 @@ function getRequiredEnv(name) {
   return String(process.env[name] ?? "").trim();
 }
 
+function toBase26Letters(value) {
+  let n = value;
+  let out = "";
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    out = String.fromCharCode(65 + rem) + out;
+    n = Math.floor((n - 1) / 26);
+  }
+  return out || "A";
+}
+
+function parsePublicOrderId(raw) {
+  const match = /^([A-Z]+)-(\d{4})$/.exec(String(raw ?? "").trim());
+  if (!match) return null;
+  return { letters: match[1], num: Number(match[2]) };
+}
+
+function lettersToBase26Index(letters) {
+  let acc = 0;
+  for (const ch of letters) {
+    acc = acc * 26 + (ch.charCodeAt(0) - 64);
+  }
+  return acc;
+}
+
+function nextPublicOrderId(lastId) {
+  if (!lastId) return "A-0001";
+  const parsed = parsePublicOrderId(lastId);
+  if (!parsed) return "A-0001";
+  if (parsed.num < 9999) {
+    return `${parsed.letters}-${String(parsed.num + 1).padStart(4, "0")}`;
+  }
+  const nextLetters = toBase26Letters(lettersToBase26Index(parsed.letters) + 1);
+  return `${nextLetters}-0001`;
+}
+
 app.post("/api/order", (req, res) => {
   try {
     const validation = validateOrderBody(req.body);
@@ -52,49 +89,72 @@ app.post("/api/order", (req, res) => {
 
     const { name, phone, email, pickup_id, pickup_address, amount } = req.body;
     const parsedAmount = Number(amount);
+    const normalizedPhone = normalizeRuPhone(phone);
+    if (!normalizedPhone) {
+      return res.status(400).json({
+        error: "Укажите телефон в формате +7 (999) 123-45-67.",
+        errors: { phone: "Укажите телефон в формате +7 (999) 123-45-67." },
+      });
+    }
 
-    const order = {
-      id: uuidv4(),
-      name: String(name ?? "").trim(),
-      phone: String(phone ?? "").trim(),
-      email: String(email ?? "").trim(),
-      pickup_id: String(pickup_id ?? "").trim(),
-      pickup_address: String(pickup_address ?? "").trim(),
-      amount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
-      status: "draft",
-      payment_id: null,
-      paid_at: null,
-      created_at: new Date().toISOString(),
-    };
+    const order = transaction(() => {
+      const last = get(
+        `SELECT public_order_id
+         FROM orders
+         WHERE public_order_id IS NOT NULL AND public_order_id != ''
+         ORDER BY rowid DESC
+         LIMIT 1`
+      );
+      const publicOrderId = nextPublicOrderId(last?.public_order_id ?? "");
 
-    run(
-      `INSERT INTO orders (
-        id,
-        name,
-        phone,
-        email,
-        pickup_id,
-        pickup_address,
-        amount,
-        status,
-        payment_id,
-        paid_at,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        order.id,
-        order.name,
-        order.phone,
-        order.email,
-        order.pickup_id,
-        order.pickup_address,
-        order.amount,
-        order.status,
-        order.payment_id,
-        order.paid_at,
-        order.created_at,
-      ]
-    );
+      const payload = {
+        id: uuidv4(),
+        public_order_id: publicOrderId,
+        name: String(name ?? "").trim(),
+        phone: normalizedPhone,
+        email: String(email ?? "").trim(),
+        pickup_id: String(pickup_id ?? "").trim(),
+        pickup_address: String(pickup_address ?? "").trim(),
+        amount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
+        status: "draft",
+        payment_id: null,
+        paid_at: null,
+        created_at: new Date().toISOString(),
+      };
+
+      run(
+        `INSERT INTO orders (
+          id,
+          public_order_id,
+          name,
+          phone,
+          email,
+          pickup_id,
+          pickup_address,
+          amount,
+          status,
+          payment_id,
+          paid_at,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          payload.id,
+          payload.public_order_id,
+          payload.name,
+          payload.phone,
+          payload.email,
+          payload.pickup_id,
+          payload.pickup_address,
+          payload.amount,
+          payload.status,
+          payload.payment_id,
+          payload.paid_at,
+          payload.created_at,
+        ]
+      );
+
+      return payload;
+    })();
 
     return res.status(201).json(order);
   } catch (error) {
@@ -108,6 +168,7 @@ app.get("/api/orders", (_req, res) => {
     const orders = all(
       `SELECT
         id,
+        public_order_id,
         name,
         phone,
         email,
@@ -141,6 +202,7 @@ app.post("/api/payment/create", async (req, res) => {
     const order = get(
       `SELECT
         id,
+        public_order_id,
         name,
         phone,
         email,
@@ -173,6 +235,7 @@ app.post("/api/payment/create", async (req, res) => {
     if (order.payment_id) {
       return res.status(200).json({
         orderId: order.id,
+        publicOrderId: String(order.public_order_id ?? ""),
         paymentId: String(order.payment_id),
         status: String(order.status ?? ""),
         paymentUrl: null,
@@ -206,9 +269,10 @@ app.post("/api/payment/create", async (req, res) => {
           type: "redirect",
           return_url: `${appBaseUrl}/payment/return?orderId=${encodeURIComponent(order.id)}`,
         },
-        description: `Заказ ${order.id}`,
+        description: `Заказ ${order.public_order_id || order.id}`,
         metadata: {
           orderId: order.id,
+          publicOrderId: String(order.public_order_id ?? ""),
           customerName: String(order.name ?? ""),
           customerPhone: String(order.phone ?? ""),
           customerEmail: String(order.email ?? ""),
@@ -251,6 +315,7 @@ app.post("/api/payment/create", async (req, res) => {
 
     return res.status(200).json({
       orderId: order.id,
+      publicOrderId: String(order.public_order_id ?? ""),
       paymentId,
       status: paymentStatus,
       paymentUrl: confirmationUrl,
@@ -282,6 +347,7 @@ app.post("/api/yookassa/webhook", (req, res) => {
       const paidOrder = get(
         `SELECT
           id,
+          public_order_id,
           name,
           phone,
           email,
@@ -339,6 +405,7 @@ app.patch("/api/orders/:id/status", (req, res) => {
     const order = get(
       `SELECT
         id,
+        public_order_id,
         name,
         phone,
         email,

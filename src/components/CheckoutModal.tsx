@@ -5,6 +5,7 @@ import DeliveryWidget from "./DeliveryWidget";
 import MobilePickupFullscreen from "./MobilePickupFullscreen";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { validateOrderFields } from "../lib/orderValidation";
+import { applyRuPhoneMask, normalizeRuPhone } from "../lib/phone";
 import type { SelectedPickup } from "../types/selectedPickup";
 
 interface CheckoutModalProps {
@@ -56,9 +57,10 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   }, [isOpen]);
 
   const handleCreateOrder = async () => {
+    const normalizedPhone = normalizeRuPhone(phone);
     const payload = {
       name,
-      phone,
+      phone: normalizedPhone ?? phone,
       email,
       pickup_id: selectedPickup?.pickup_id ?? "",
       pickup_address: selectedPickup?.pickup_address ?? "",
@@ -68,7 +70,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
     const localCheck = validateOrderFields({
       name: payload.name,
-      phone: payload.phone,
+      phone,
       pickup_id: payload.pickup_id,
       pickup_address: payload.pickup_address,
     });
@@ -205,8 +207,15 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     required
                     placeholder="+7 (999) 000-00-00"
                     value={phone}
+                  inputMode="tel"
+                  autoComplete="tel-national"
+                  onFocus={() => {
+                    if (!phone.trim()) {
+                      setPhone("+7");
+                    }
+                  }}
                     onChange={(e) => {
-                      setPhone(e.target.value);
+                    setPhone(applyRuPhoneMask(e.target.value));
                       setOrderError(null);
                       setOrderSuccess(null);
                     }}

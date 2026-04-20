@@ -21,10 +21,15 @@ export function all(sql, params = []) {
   return db.prepare(sql).all(params);
 }
 
+export function transaction(fn) {
+  return db.transaction(fn);
+}
+
 export function initDb() {
   run(`
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY,
+      public_order_id TEXT UNIQUE,
       name TEXT,
       phone TEXT,
       email TEXT,
@@ -37,4 +42,11 @@ export function initDb() {
       created_at TEXT
     )
   `);
+
+  try {
+    run(`ALTER TABLE orders ADD COLUMN public_order_id TEXT`);
+  } catch {
+    // Column already exists on existing installations.
+  }
+  run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_public_order_id ON orders(public_order_id)`);
 }

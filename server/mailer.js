@@ -37,7 +37,7 @@ function getTransporter() {
 export async function sendOrderPaidEmails(order) {
   const mailer = getTransporter();
 
-  const orderId = String(order?.id ?? "");
+  const orderId = String(order?.public_order_id ?? order?.id ?? "");
   const customerName = String(order?.name ?? "Покупатель").trim();
   const customerEmail = String(order?.email ?? "").trim();
   const customerPhone = String(order?.phone ?? "").trim();

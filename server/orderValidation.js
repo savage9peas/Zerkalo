@@ -1,6 +1,4 @@
-export function countPhoneDigits(phone) {
-  return String(phone ?? "").replace(/\D/g, "").length;
-}
+import { isValidRuPhone } from "./phone.js";
 
 /**
  * @returns {{ ok: true } | { ok: false, error: string, errors: Record<string, string> }}
@@ -13,10 +11,8 @@ export function validateOrderBody(body) {
     errors.name = "Укажите имя.";
   }
 
-  const digits = countPhoneDigits(body?.phone);
-  if (digits < 11) {
-    errors.phone =
-      "Укажите телефон: нужно не меньше 11 цифр (можно с +, пробелами и дефисами).";
+  if (!isValidRuPhone(body?.phone)) {
+    errors.phone = "Укажите телефон в формате +7 (999) 123-45-67.";
   }
 
   const pickup_id = String(body?.pickup_id ?? "").trim();
