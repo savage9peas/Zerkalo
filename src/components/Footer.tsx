@@ -13,10 +13,18 @@ export default function Footer() {
           Зеркало Венеры
         </div>
         
-        <div className="flex gap-8 font-sans text-xs uppercase tracking-widest text-ink-light">
-          <a href="#" className="hover:text-gold transition-colors">Instagram</a>
-          <a href="#" className="hover:text-gold transition-colors">Telegram</a>
-          <a href="#" className="hover:text-gold transition-colors">Контакты</a>
+        <div className="flex flex-col items-center md:items-end font-sans text-xs uppercase tracking-widest text-ink-light">
+          <a
+            href="https://instagram.com/ishine_mag"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gold transition-colors"
+          >
+            Instagram
+          </a>
+          <p className="mt-2 max-w-[280px] text-center md:text-right normal-case tracking-normal text-[11px] text-ink/50">
+            Instagram — проект Meta Platforms Inc., деятельность которой запрещена на территории РФ
+          </p>
         </div>
       </div>
       
