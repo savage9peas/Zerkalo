@@ -14,6 +14,7 @@ import { normalizeRuPhone } from "./phone.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const PRODUCT_AMOUNT_RUB = 1990;
 
 console.log("APP_BASE_URL:", process.env.APP_BASE_URL);
 console.log("YOOKASSA_SHOP_ID exists:", Boolean(process.env.YOOKASSA_SHOP_ID));
@@ -87,8 +88,7 @@ app.post("/api/order", (req, res) => {
       });
     }
 
-    const { name, phone, email, pickup_id, pickup_address, amount } = req.body;
-    const parsedAmount = Number(amount);
+    const { name, phone, email, pickup_id, pickup_address } = req.body;
     const normalizedPhone = normalizeRuPhone(phone);
     if (!normalizedPhone) {
       return res.status(400).json({
@@ -115,7 +115,7 @@ app.post("/api/order", (req, res) => {
         email: String(email ?? "").trim(),
         pickup_id: String(pickup_id ?? "").trim(),
         pickup_address: String(pickup_address ?? "").trim(),
-        amount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
+        amount: PRODUCT_AMOUNT_RUB,
         status: "draft",
         payment_id: null,
         paid_at: null,

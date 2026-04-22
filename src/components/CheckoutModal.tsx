@@ -65,7 +65,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       pickup_id: selectedPickup?.pickup_id ?? "",
       pickup_address: selectedPickup?.pickup_address ?? "",
       pickup_type: selectedPickup?.pickup_type ?? "",
-      amount: 1,
+      amount: 1990,
     };
 
     const localCheck = validateOrderFields({
